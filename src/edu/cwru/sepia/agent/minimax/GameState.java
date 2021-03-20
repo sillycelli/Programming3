@@ -54,7 +54,7 @@ public class GameState {
      *
      * @param state Current state of the episode
      */
-    public GameState(State.StateView state) {
+    public GameState(State.StateView state) { //Create an attribute isPlayer which returns if this is a player
     }
 
     /**
@@ -119,5 +119,9 @@ public class GameState {
      */
     public List<GameStateChild> getChildren() {
         return null;
+    }
+
+    public boolean isPlayer() {
+        return isPlayer;
     }
 }

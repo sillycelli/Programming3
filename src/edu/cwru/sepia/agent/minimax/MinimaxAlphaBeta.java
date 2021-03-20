@@ -74,7 +74,44 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
-        return node;
+        if(depth == 0) { //maybe also add whether it's a terminal node, that might not be applicable to a zero-sum game though
+            return node;
+        }
+        if(node.state.isPlayer()) {
+            double maxVal = Double.NEGATIVE_INFINITY;
+            List<GameStateChild> children = node.state.getChildren();
+            GameStateChild nodeEval = node;
+            for(int i = 0; i < children.size(); i++) {
+                nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
+                maxVal = Math.max(maxVal, nodeEval.state.getUtility());
+                alpha = Math.max(alpha, maxVal);
+
+                if(beta <= alpha) {
+                    break;
+                }
+            }
+            if(nodeEval.state.getUtility() == maxVal) {
+                return nodeEval;
+            }
+            return node;
+        } else {
+            double minVal = Double.POSITIVE_INFINITY;
+            List<GameStateChild> children = node.state.getChildren();
+            GameStateChild nodeEval = node;
+            for(int i = 0; i < children.size(); i++) {
+                nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
+                minVal = Math.min(minVal, nodeEval.state.getUtility());
+                beta = Math.min(beta, minVal);
+
+                if(beta <= alpha) {
+                    break;
+                }
+            }
+            if(nodeEval.state.getUtility() == minVal) {
+                return nodeEval;
+            }
+            return node;
+        }
     }
 
     /**
