@@ -148,9 +148,9 @@ public class MinimaxAlphaBeta extends Agent {
      *
      * @param children
      * @return The list of children sorted by your heuristic.
-<<<<<<< HEAD
      * equation: (
      */
+    
     public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children){
 
         PriorityQueue<GameStateChild> orderingChildren = new PriorityQueue<GameStateChild>(new Comparator<GameStateChild>() {
@@ -193,11 +193,4 @@ public class MinimaxAlphaBeta extends Agent {
         return sumDistance;
     }
 
-=======
-     */
-    public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children)
-    {
-        return children;
-    }
->>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
 }
