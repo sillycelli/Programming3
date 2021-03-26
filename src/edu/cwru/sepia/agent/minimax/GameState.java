@@ -260,8 +260,15 @@ public class GameState {
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
-        return ThreadLocalRandom.current().nextDouble(-100, 100);
+        double utility = 0;
+
+        Random random = new Random();
+        utility = random.nextDouble() * 100;
+
+        return utility;
     }
+
+
 
     /**
      * You will implement this function.
@@ -309,29 +316,52 @@ public class GameState {
 
         ArrayList<MMAgent> agents = board.getAgents(this.isPlayerTurn ? 0 : 1);
 
-        for (MMAgent mma : agents) {
-            ArrayList<Action> actions = getAgentActions(mma);
-            Map<Integer, Action> actionMap = new HashMap<>();
-            for (Action a : actions) {
-                actionMap.put(a.getUnitId(), a);
-            }
+        ArrayList<ArrayList<Action>> actionsForEachAgent = new ArrayList<>();
 
-            GameState gs = new GameState(this);
-            gs.applyActions(actions);
-            gsc.add(new GameStateChild(actionMap, gs));
+        for (MMAgent agent : agents) {
+            actionsForEachAgent.add(getAgentActions(agent));
         }
 
-        return gsc;
+        List<Map<Integer, Action>> l = enumerateActions(actionsForEachAgent);
+
+
+
+//        for (MMAgent mma : agents) {
+//            ArrayList<Action> actions = getAgentActions(mma);
+//            Map<Integer, Action> actionMap = new HashMap<>();
+//            for (Action a : actions) {
+//                actionMap.put(a.getUnitId(), a);
+//            }
+//
+//            GameState gs = new GameState(this);
+//            gs.applyActions(actions);
+//            gsc.add(new GameStateChild(actionMap, gs));
+//        }
+
+//        return gsc;
     }
+
+    private List<Map<Integer, Action>> enumerateActions(ArrayList<ArrayList<Action>> actionList) {
+        ArrayList<Map<Integer, Action>> actionMaps = new ArrayList<>();
+
+        for (int i = 0; i < actionList.size(); i++) {
+            List<Action> list = actionList.get(i);
+
+
+        }
+
+        return actionMaps;
+    }
+
 
     private ArrayList<Action> getAgentActions(MMAgent agent) {
         ArrayList<Action> actions = new ArrayList<>();
 
         for (Direction d : Direction.values()) {
-            for (Resource resource : board.getResources()) {
-                if (resource.getXPos() != agent.getXPos() && resource.getYPos() != agent.getYPos())
+//            for (Resource resource : board.getResources()) {
+//                if (resource.getXPos() != agent.getXPos() && resource.getYPos() != agent.getYPos())
                     actions.add(Action.createPrimitiveMove(agent.getID(), d));
-            }
+//            }
         }
 
         return actions;
