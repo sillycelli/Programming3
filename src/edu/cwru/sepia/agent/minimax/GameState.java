@@ -321,13 +321,13 @@ public class GameState {
             actionsForEachAgent.add(getAgentActions(agent));
         }
 
-        List<Map<Integer, Action>> l = enumerateActions(actionsForEachAgent);
+        List<Map<Integer, Action>> l = cartesianProductOf2(actionsForEachAgent);
 
         return convertToGameStateChildList(l);
 
     }
 //      This is a more efficient version if we can assume only 2 in the actionList
-    private List<Map<Integer, Action>> enumerateActions2(ArrayList<ArrayList<Action>> actionList) {
+    private List<Map<Integer, Action>> cartesianProductOf2(ArrayList<ArrayList<Action>> actionList) {
         ArrayList<Map<Integer, Action>> maps = new ArrayList<>();
 
         ArrayList<Action> firstActions = actionList.get(0);
@@ -353,32 +353,32 @@ public class GameState {
 
         return maps;
     }
-
-    private List<Map<Integer, Action>> enumerateActions(ArrayList<ArrayList<Action>> actionList) {
-        ArrayList<Map<Integer, Action>> actionMaps = new ArrayList<>();
-
-        for (int i = 0; i < actionList.size(); i++) {
-            List<Action> list = actionList.get(i);
-
-            for (Action action : list) {
-                for (int i2 = i; i2 < actionList.size(); i2++) {
-                    List<Action> list2 = actionList.get(i);
-
-                    for (Action action2 : list2) {
-                        Map<Integer, Action> map = new HashMap<>();
-                        map.put(action.getUnitId(), action);
-                        map.put(action2.getUnitId(), action2);
-
-                        actionMaps.add(map);
-                    }
-                }
-
-            }
-
-        }
-
-        return actionMaps;
-    }
+//    This is a generalized version that should work for n in actionList
+//    private List<Map<Integer, Action>> enumerateActions(ArrayList<ArrayList<Action>> actionList) {
+//        ArrayList<Map<Integer, Action>> actionMaps = new ArrayList<>();
+//
+//        for (int i = 0; i < actionList.size(); i++) {
+//            List<Action> list = actionList.get(i);
+//
+//            for (Action action : list) {
+//                for (int i2 = i; i2 < actionList.size(); i2++) {
+//                    List<Action> list2 = actionList.get(i);
+//
+//                    for (Action action2 : list2) {
+//                        Map<Integer, Action> map = new HashMap<>();
+//                        map.put(action.getUnitId(), action);
+//                        map.put(action2.getUnitId(), action2);
+//
+//                        actionMaps.add(map);
+//                    }
+//                }
+//
+//            }
+//
+//        }
+//
+//        return actionMaps;
+//    }
 
     private List<GameStateChild> convertToGameStateChildList(List<Map<Integer, Action>> maps){
         List<GameStateChild> gsc = new ArrayList<GameStateChild>();
