@@ -4,10 +4,13 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.action.ActionType;
 import edu.cwru.sepia.action.DirectedAction;
 import edu.cwru.sepia.action.TargetedAction;
+import edu.cwru.sepia.agent.Agent;
+import edu.cwru.sepia.environment.model.state.ResourceNode;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -23,6 +26,8 @@ public class GameState {
     private boolean isPlayer;
     private int xExtent, yExtent;
     private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+    private List<ResourceNode.ResourceView> resourceNodes;
+    private List<Unit.UnitView> playerUnits, enemyUnits;
     private HashMap<Integer, Unit.UnitView> hashEntityUnits;
 
     /**
@@ -64,23 +69,27 @@ public class GameState {
         xExtent = state.getXExtent();
         yExtent = state.getYExtent();
         resourceIDs = state.getAllResourceIds();
+        resourceNodes = state.getAllResourceNodes();
         playerUnitIDs = state.getUnitIds(0);
         enemyUnitIDs = state.getUnitIds(1);
 
-        hashEntityUnits = new HashMap<>(playerUnitIDs.size() + enemyUnitIDs.size());
+        playerUnits = state.getUnits(0);
+        enemyUnits = state.getUnits(1);
 
-        for (Unit.UnitView uv : state.getUnits(0)) {
+        hashEntityUnits = new HashMap<>(playerUnits.size() + enemyUnits.size());
+
+        for (Unit.UnitView uv : playerUnits) {
             hashEntityUnits.put(uv.getID(), uv);
         }
 
-        for (Unit.UnitView uv : state.getUnits(0)) {
+        for (Unit.UnitView uv : enemyUnits) {
             hashEntityUnits.put(uv.getID(), uv);
         }
 
     }
 
-    public List<Integer> getUnitIds(int id) {
-        return id == 0 ? playerUnitIDs : enemyUnitIDs;
+    public List<Integer> getUnitIds(int player) {
+        return player == 0 ? playerUnitIDs : enemyUnitIDs;
     }
 
     public Unit.UnitView getUnit(int id) {
@@ -147,8 +156,38 @@ public class GameState {
      * 
      * @return All possible actions and their associated resulting game state
      */
+
+    private static final Direction[] AGENT_POSSIBLE_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+
     public List<GameStateChild> getChildren() {
-        return null;
+//        int[][] board = new int[xExtent][yExtent];
+//
+//        for (ResourceNode.ResourceView rv : resourceNodes) {
+//            board[rv.getXPosition()][rv.getYPosition()] = 1;
+//        }
+
+        ArrayList<GameStateChild> gsc = new ArrayList<>();
+
+        for (Unit.UnitView uv : playerUnits) {
+            ArrayList<Action> actions = getAgentActions(uv);
+            Map<Integer, Action> actionMap = new HashMap<>();
+            for (Action a : actions) {
+                actionMap.put(a.getUnitId(), a);
+            }
+
+            gsc.add(new GameStateChild(actionMap, this));
+        }
+
+        return gsc;
+    }
+
+    private ArrayList<Action> getAgentActions(Unit.UnitView agent) {
+        ArrayList<Action> actions = new ArrayList<>();
+
+        for (Direction d : AGENT_POSSIBLE_DIRECTIONS)
+            actions.add(Action.createPrimitiveMove(agent.getID(), d));
+
+        return actions;
     }
 
     public boolean isPlayer() {
