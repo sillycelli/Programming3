@@ -3,14 +3,11 @@ package edu.cwru.sepia.agent.minimax;
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.action.ActionType;
 import edu.cwru.sepia.action.DirectedAction;
-import edu.cwru.sepia.action.TargetedAction;
-import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -25,7 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class GameState {
 
     private Board board;
-    private boolean isPlayerTurn;
+    private boolean isPlayerTurn, utilityComputed;
+    private double utility;
 //    private int xExtent, yExtent;
 //    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
 //    private List<ResourceNode.ResourceView> resourceNodes;
@@ -260,12 +258,13 @@ public class GameState {
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
-        double utility = 0;
+        if (utilityComputed)
+            return this.utility;
 
-        Random random = new Random();
-        utility = random.nextDouble() * 100;
+        this.utility = ThreadLocalRandom.current().nextDouble(-100, 100);
+        this.utilityComputed = true;
 
-        return utility;
+        return this.utility;
     }
 
 
@@ -324,21 +323,35 @@ public class GameState {
 
         List<Map<Integer, Action>> l = enumerateActions(actionsForEachAgent);
 
+        return convertToGameStateChildList(l);
 
+    }
+//      This is a more efficient version if we can assume only 2 in the actionList
+    private List<Map<Integer, Action>> enumerateActions2(ArrayList<ArrayList<Action>> actionList) {
+        ArrayList<Map<Integer, Action>> maps = new ArrayList<>();
 
-//        for (MMAgent mma : agents) {
-//            ArrayList<Action> actions = getAgentActions(mma);
-//            Map<Integer, Action> actionMap = new HashMap<>();
-//            for (Action a : actions) {
-//                actionMap.put(a.getUnitId(), a);
-//            }
-//
-//            GameState gs = new GameState(this);
-//            gs.applyActions(actions);
-//            gsc.add(new GameStateChild(actionMap, gs));
-//        }
+        ArrayList<Action> firstActions = actionList.get(0);
+        for (Action action : firstActions) {
+            if (actionList.size() == 1) {
+                Map<Integer, Action> map = new HashMap<>();
 
-//        return gsc;
+                map.put(action.getUnitId(), action);
+
+                maps.add(map);
+            } else {
+                ArrayList<Action> secondActions = actionList.get(1);
+                for (Action action2 : secondActions) {
+                    HashMap<Integer, Action> map = new HashMap<>();
+
+                    map.put(action2.getUnitId(), action2);
+                    map.put(action.getUnitId(), action);
+
+                    maps.add(map);
+                }
+            }
+        }
+
+        return maps;
     }
 
     private List<Map<Integer, Action>> enumerateActions(ArrayList<ArrayList<Action>> actionList) {
@@ -347,10 +360,36 @@ public class GameState {
         for (int i = 0; i < actionList.size(); i++) {
             List<Action> list = actionList.get(i);
 
+            for (Action action : list) {
+                for (int i2 = i; i2 < actionList.size(); i2++) {
+                    List<Action> list2 = actionList.get(i);
+
+                    for (Action action2 : list2) {
+                        Map<Integer, Action> map = new HashMap<>();
+                        map.put(action.getUnitId(), action);
+                        map.put(action2.getUnitId(), action2);
+
+                        actionMaps.add(map);
+                    }
+                }
+
+            }
 
         }
 
         return actionMaps;
+    }
+
+    private List<GameStateChild> convertToGameStateChildList(List<Map<Integer, Action>> maps){
+        List<GameStateChild> gsc = new ArrayList<GameStateChild>();
+        for(Map<Integer, Action> actionMap : maps){
+            GameState gs = new GameState(this);
+            for(Action action : actionMap.values()){
+                gs.applyAction(action);
+            }
+            gsc.add(new GameStateChild(actionMap, gs));
+        }
+        return gsc;
     }
 
 
@@ -367,13 +406,10 @@ public class GameState {
         return actions;
     }
 
-    private void applyActions(ArrayList<Action> actions) {
-        for (Action action : actions) {
+    private void applyAction(Action action) {
             if (action.getType() == ActionType.PRIMITIVEMOVE) {
                 Direction dir = ((DirectedAction) action).getDirection();
                 board.moveAgent(action.getUnitId(), dir.xComponent(), dir.yComponent());
             }
         }
-    }
-
 }
