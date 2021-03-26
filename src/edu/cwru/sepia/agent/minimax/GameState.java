@@ -24,15 +24,13 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class GameState {
 
-    private boolean isPlayer;
+    private Board board;
+    private boolean isPlayerTurn;
 //    private int xExtent, yExtent;
 //    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
 //    private List<ResourceNode.ResourceView> resourceNodes;
 //    private List<Unit.UnitView> playerUnits, enemyUnits;
 //    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
-
-
-    private Board board;
 
     private class MMAgent {
         private int health, id, xPos, yPos;
@@ -78,12 +76,14 @@ public class GameState {
         public int getYPos() {
             return yPos;
         }
+
     }
 
     private class Board {
         private HashMap<Integer, MMAgent> agents;
-        private List<Resource> resources;
-        private int xExtent, yExtent;
+        private ArrayList<MMAgent> goodAgents, badAgents;
+        private ArrayList<Resource> resources;
+        private final int xExtent, yExtent;
 
         public Board(int xExtent, int yExtent) {
             this.xExtent = xExtent;
@@ -91,10 +91,17 @@ public class GameState {
 
             agents = new HashMap<>();
             resources = new ArrayList<>();
+            goodAgents = new ArrayList<>();
+            badAgents = new ArrayList<>();
         }
 
-        public void addAgent(Unit.UnitView uv) {
+        public void addAgent(Unit.UnitView uv, boolean isGood) {
             MMAgent mma = new MMAgent(uv);
+            if (isGood)
+                goodAgents.add(mma);
+            else
+                badAgents.add(mma);
+
             agents.put(uv.getID(), mma);
         }
 
@@ -111,8 +118,18 @@ public class GameState {
             return agents;
         }
 
+        public ArrayList<MMAgent> getAgents(int player){
+            return player == 0 ? goodAgents : badAgents;
+        }
+
         public MMAgent getAgent(int id) {
             return agents.get(id);
+        }
+
+        public void moveAgent(int id, int dx, int dy) {
+            MMAgent agent = agents.get(id);
+            agent.xPos = agent.xPos + dx;
+            agent.yPos = agent.yPos + dy;
         }
 
     }
@@ -155,13 +172,22 @@ public class GameState {
     public GameState(State.StateView state) {
         board = new Board(state.getXExtent(), state.getYExtent());
 
-        for (Unit.UnitView uv : state.getAllUnits()) {
-            board.addAgent(uv);
+        List<Unit.UnitView> playerUnits = state.getUnits(0);
+        List<Unit.UnitView> enemyUnits = state.getUnits(1);
+
+        for (Unit.UnitView uv : playerUnits) {
+            board.addAgent(uv, true);
+        }
+
+        for (Unit.UnitView uv : playerUnits) {
+            board.addAgent(uv, false);
         }
 
         for (ResourceNode.ResourceView rv : state.getAllResourceNodes()) {
             board.addResource(rv);
         }
+
+        this.isPlayerTurn = true;
 
 
 //        xExtent = state.getXExtent();
@@ -189,7 +215,11 @@ public class GameState {
     }
 
     public GameState(GameState state) {
+        this.board = new Board(state.board.xExtent, state.board.yExtent);
+        this.board.resources = new ArrayList<>(state.board.resources);
+        this.board.agents = new HashMap<>(state.board.agents);
 
+        this.isPlayerTurn = !state.isPlayerTurn;
 
 //        this.xExtent = state.xExtent;
 //        this.yExtent = state.yExtent;
@@ -230,7 +260,7 @@ public class GameState {
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
-        return ThreadLocalRandom.current().nextDouble();
+        return ThreadLocalRandom.current().nextDouble(-100, 100);
     }
 
     /**
@@ -275,24 +305,20 @@ public class GameState {
 //    private static final Direction[] AGENT_POSSIBLE_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
     public List<GameStateChild> getChildren() {
-//        int[][] board = new int[xExtent][yExtent];
-//
-//        for (ResourceNode.ResourceView rv : resourceNodes) {
-//            board[rv.getXPosition()][rv.getYPosition()] = 1;
-//        }
-
         ArrayList<GameStateChild> gsc = new ArrayList<>();
 
-        for (MMAgent mma : board.getAgents().values()) {
+        ArrayList<MMAgent> agents = board.getAgents(this.isPlayerTurn ? 0 : 1);
+
+        for (MMAgent mma : agents) {
             ArrayList<Action> actions = getAgentActions(mma);
             Map<Integer, Action> actionMap = new HashMap<>();
             for (Action a : actions) {
                 actionMap.put(a.getUnitId(), a);
             }
 
-//            GameState gs = new GameState(this);
-//            gs.applyActions(actions);
-            gsc.add(new GameStateChild(actionMap, this));
+            GameState gs = new GameState(this);
+            gs.applyActions(actions);
+            gsc.add(new GameStateChild(actionMap, gs));
         }
 
         return gsc;
@@ -314,12 +340,10 @@ public class GameState {
     private void applyActions(ArrayList<Action> actions) {
         for (Action action : actions) {
             if (action.getType() == ActionType.PRIMITIVEMOVE) {
-//                getUnit(action.getUnitId()) = ((DirectedAction) action).getDirection().xComponent();
+                Direction dir = ((DirectedAction) action).getDirection();
+                board.moveAgent(action.getUnitId(), dir.xComponent(), dir.yComponent());
             }
         }
     }
 
-    public boolean isPlayer() {
-        return isPlayer;
-    }
 }
