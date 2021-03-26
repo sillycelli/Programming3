@@ -21,8 +21,7 @@ import java.util.*;
 public class GameState {
 
     private boolean isPlayer;
-    private int xExtent, yExtent;
-    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+    private State.StateView state;
     private HashMap<Integer, Unit.UnitView> hashEntityUnits;
 
     /**
@@ -61,26 +60,20 @@ public class GameState {
      */
 
     public GameState(State.StateView state) {
-        xExtent = state.getXExtent();
-        yExtent = state.getYExtent();
-        resourceIDs = state.getAllResourceIds();
-        playerUnitIDs = state.getUnitIds(0);
-        enemyUnitIDs = state.getUnitIds(1);
+        this.state = state;
 
-        hashEntityUnits = new HashMap<>(playerUnitIDs.size() + enemyUnitIDs.size());
+        List<Unit.UnitView> units = state.getAllUnits();
 
-        for (Unit.UnitView uv : state.getUnits(0)) {
-            hashEntityUnits.put(uv.getID(), uv);
-        }
+        hashEntityUnits = new HashMap<>(units.size());
 
-        for (Unit.UnitView uv : state.getUnits(0)) {
+        for (Unit.UnitView uv : units) {
             hashEntityUnits.put(uv.getID(), uv);
         }
 
     }
 
     public List<Integer> getUnitIds(int id) {
-        return id == 0 ? playerUnitIDs : enemyUnitIDs;
+        return state.getUnitIds(id);
     }
 
     public Unit.UnitView getUnit(int id) {
