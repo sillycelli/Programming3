@@ -12,6 +12,7 @@ import edu.cwru.sepia.util.Direction;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * This class stores all of the information the agent
@@ -24,11 +25,97 @@ import java.util.*;
 public class GameState {
 
     private boolean isPlayer;
-    private int xExtent, yExtent;
-    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
-    private List<ResourceNode.ResourceView> resourceNodes;
-    private List<Unit.UnitView> playerUnits, enemyUnits;
-    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
+//    private int xExtent, yExtent;
+//    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+//    private List<ResourceNode.ResourceView> resourceNodes;
+//    private List<Unit.UnitView> playerUnits, enemyUnits;
+//    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
+
+
+    private Board board;
+
+    private class MMAgent {
+        private int health, id, xPos, yPos;
+        private Unit.UnitView uv;
+
+        public MMAgent(Unit.UnitView uv) {
+            this.uv = uv;
+            this.health = uv.getHP();
+            this.xPos = uv.getXPosition();
+            this.yPos = uv.getYPosition();
+            this.id = uv.getID();
+        }
+
+        public int getXPos() {
+            return xPos;
+        }
+
+        public int getYPos() {
+            return yPos;
+        }
+
+        public int getID() {
+            return id;
+        }
+
+        public Unit.UnitView getUV() {
+            return uv;
+        }
+    }
+
+    private class Resource {
+        private int xPos, yPos;
+
+        public Resource(int x, int y) {
+            this.xPos = x;
+            this.xPos = y;
+        }
+
+        public int getXPos() {
+            return xPos;
+        }
+
+        public int getYPos() {
+            return yPos;
+        }
+    }
+
+    private class Board {
+        private HashMap<Integer, MMAgent> agents;
+        private List<Resource> resources;
+        private int xExtent, yExtent;
+
+        public Board(int xExtent, int yExtent) {
+            this.xExtent = xExtent;
+            this.yExtent = yExtent;
+
+            agents = new HashMap<>();
+            resources = new ArrayList<>();
+        }
+
+        public void addAgent(Unit.UnitView uv) {
+            MMAgent mma = new MMAgent(uv);
+            agents.put(uv.getID(), mma);
+        }
+
+        public void addResource(ResourceNode.ResourceView rv) {
+            Resource resource = new Resource(rv.getXPosition(), rv.getYPosition());
+            resources.add(resource);
+        }
+
+        public List<Resource> getResources() {
+            return resources;
+        }
+
+        public HashMap<Integer, MMAgent> getAgents() {
+            return agents;
+        }
+
+        public MMAgent getAgent(int id) {
+            return agents.get(id);
+        }
+
+    }
 
     /**
      * You will implement this constructor. It will
@@ -66,35 +153,63 @@ public class GameState {
      */
 
     public GameState(State.StateView state) {
-        xExtent = state.getXExtent();
-        yExtent = state.getYExtent();
-        resourceIDs = state.getAllResourceIds();
-        resourceNodes = state.getAllResourceNodes();
-        playerUnitIDs = state.getUnitIds(0);
-        enemyUnitIDs = state.getUnitIds(1);
+        board = new Board(state.getXExtent(), state.getYExtent());
 
-        playerUnits = state.getUnits(0);
-        enemyUnits = state.getUnits(1);
-
-        hashEntityUnits = new HashMap<>(playerUnits.size() + enemyUnits.size());
-
-        for (Unit.UnitView uv : playerUnits) {
-            hashEntityUnits.put(uv.getID(), uv);
+        for (Unit.UnitView uv : state.getAllUnits()) {
+            board.addAgent(uv);
         }
 
-        for (Unit.UnitView uv : enemyUnits) {
-            hashEntityUnits.put(uv.getID(), uv);
+        for (ResourceNode.ResourceView rv : state.getAllResourceNodes()) {
+            board.addResource(rv);
         }
 
+
+//        xExtent = state.getXExtent();
+//        yExtent = state.getYExtent();
+//        resourceIDs = state.getAllResourceIds();
+//        resourceNodes = state.getAllResourceNodes();
+//        playerUnitIDs = state.getUnitIds(0);
+//        enemyUnitIDs = state.getUnitIds(1);
+
+//        playerUnits = state.getUnits(0);
+//        enemyUnits = state.getUnits(1);
+
+//        hashEntityUnits = new HashMap<>(playerUnits.size() + enemyUnits.size());
+//
+//        for (Unit.UnitView uv : playerUnits) {
+//            hashEntityUnits.put(uv.getID(), uv);
+//        }
+//
+//        for (Unit.UnitView uv : enemyUnits) {
+//            hashEntityUnits.put(uv.getID(), uv);
+//        }
+
+
+
     }
 
-    public List<Integer> getUnitIds(int player) {
-        return player == 0 ? playerUnitIDs : enemyUnitIDs;
+    public GameState(GameState state) {
+
+
+//        this.xExtent = state.xExtent;
+//        this.yExtent = state.yExtent;
+//        this.resourceIDs = state.resourceIDs;
+//        this.playerUnitIDs = state.playerUnitIDs;
+//        this.enemyUnitIDs = state.enemyUnitIDs;
+//        this.resourceNodes = state.resourceNodes;
+//        this.playerUnits = state.playerUnits;
+//        this.enemyUnits = state.enemyUnits;
+//        this.hashEntityUnits = state.hashEntityUnits;
     }
 
-    public Unit.UnitView getUnit(int id) {
-        return hashEntityUnits.get(id);
-    }
+//    public List<Integer> getUnitIds(int player) {
+//        return player == 0 ? playerUnitIDs : enemyUnitIDs;
+//    }
+//
+//    public Unit.UnitView getUnit(int id) {
+//        return board.getAgent(id).uv;
+//
+//    }
 
     /**
      * You will implement this function.
@@ -115,7 +230,7 @@ public class GameState {
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
-        return 0.0;
+        return ThreadLocalRandom.current().nextDouble();
     }
 
     /**
@@ -157,7 +272,7 @@ public class GameState {
      * @return All possible actions and their associated resulting game state
      */
 
-    private static final Direction[] AGENT_POSSIBLE_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+//    private static final Direction[] AGENT_POSSIBLE_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
     public List<GameStateChild> getChildren() {
 //        int[][] board = new int[xExtent][yExtent];
@@ -168,26 +283,40 @@ public class GameState {
 
         ArrayList<GameStateChild> gsc = new ArrayList<>();
 
-        for (Unit.UnitView uv : playerUnits) {
-            ArrayList<Action> actions = getAgentActions(uv);
+        for (MMAgent mma : board.getAgents().values()) {
+            ArrayList<Action> actions = getAgentActions(mma);
             Map<Integer, Action> actionMap = new HashMap<>();
             for (Action a : actions) {
                 actionMap.put(a.getUnitId(), a);
             }
 
+//            GameState gs = new GameState(this);
+//            gs.applyActions(actions);
             gsc.add(new GameStateChild(actionMap, this));
         }
 
         return gsc;
     }
 
-    private ArrayList<Action> getAgentActions(Unit.UnitView agent) {
+    private ArrayList<Action> getAgentActions(MMAgent agent) {
         ArrayList<Action> actions = new ArrayList<>();
 
-        for (Direction d : AGENT_POSSIBLE_DIRECTIONS)
-            actions.add(Action.createPrimitiveMove(agent.getID(), d));
+        for (Direction d : Direction.values()) {
+            for (Resource resource : board.getResources()) {
+                if (resource.getXPos() != agent.getXPos() && resource.getYPos() != agent.getYPos())
+                    actions.add(Action.createPrimitiveMove(agent.getID(), d));
+            }
+        }
 
         return actions;
+    }
+
+    private void applyActions(ArrayList<Action> actions) {
+        for (Action action : actions) {
+            if (action.getType() == ActionType.PRIMITIVEMOVE) {
+//                getUnit(action.getUnitId()) = ((DirectedAction) action).getDirection().xComponent();
+            }
+        }
     }
 
     public boolean isPlayer() {
