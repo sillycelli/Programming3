@@ -4,31 +4,10 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
-<<<<<<< HEAD
-import edu.cwru.sepia.environment.model.state.Unit;
-
-import edu.cwru.sepia.action.Action;
-import edu.cwru.sepia.action.ActionType;
-import edu.cwru.sepia.action.DirectedAction;
-import edu.cwru.sepia.action.TargetedAction;
-import edu.cwru.sepia.environment.model.state.State;
-import edu.cwru.sepia.environment.model.state.Unit;
-import edu.cwru.sepia.util.Direction;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Comparator;
-=======
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
->>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
+import java.util.*;
 
 public class MinimaxAlphaBeta extends Agent {
 
@@ -150,7 +129,7 @@ public class MinimaxAlphaBeta extends Agent {
      * @return The list of children sorted by your heuristic.
      * equation: (
      */
-    
+
     public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children){
 
         PriorityQueue<GameStateChild> orderingChildren = new PriorityQueue<GameStateChild>(new Comparator<GameStateChild>() {
