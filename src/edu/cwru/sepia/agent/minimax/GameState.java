@@ -23,6 +23,7 @@ public class GameState {
     private boolean isPlayer;
     private int xExtent, yExtent;
     private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
 
     /**
      * You will implement this constructor. It will
@@ -65,10 +66,25 @@ public class GameState {
         resourceIDs = state.getAllResourceIds();
         playerUnitIDs = state.getUnitIds(0);
         enemyUnitIDs = state.getUnitIds(1);
+
+        hashEntityUnits = new HashMap<>(playerUnitIDs.size() + enemyUnitIDs.size());
+
+        for (Unit.UnitView uv : state.getUnits(0)) {
+            hashEntityUnits.put(uv.getID(), uv);
+        }
+
+        for (Unit.UnitView uv : state.getUnits(0)) {
+            hashEntityUnits.put(uv.getID(), uv);
+        }
+
     }
 
     public List<Integer> getUnitIds(int id) {
         return id == 0 ? playerUnitIDs : enemyUnitIDs;
+    }
+
+    public Unit.UnitView getUnit(int id) {
+        return hashEntityUnits.get(id);
     }
 
     /**
