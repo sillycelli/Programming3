@@ -20,6 +20,10 @@ import java.util.*;
  */
 public class GameState {
 
+    private boolean isPlayer;
+    private int xExtent, yExtent;
+    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+
     /**
      * You will implement this constructor. It will
      * extract all of the needed state information from the built in
@@ -55,7 +59,17 @@ public class GameState {
      * @param state Current state of the episode
      */
 
-    public GameState(State.StateView state) {}
+    public GameState(State.StateView state) {
+        xExtent = state.getXExtent();
+        yExtent = state.getYExtent();
+        resourceIDs = state.getAllResourceIds();
+        playerUnitIDs = state.getUnitIds(0);
+        enemyUnitIDs = state.getUnitIds(1);
+    }
+
+    public List<Integer> getUnitIds(int id) {
+        return id == 0 ? playerUnitIDs : enemyUnitIDs;
+    }
 
     /**
      * You will implement this function.
@@ -120,7 +134,6 @@ public class GameState {
     public List<GameStateChild> getChildren() {
         return null;
     }
-
 
     public boolean isPlayer() {
         return isPlayer;
