@@ -35,7 +35,11 @@ public class GameState {
      * resource.getXPosition() and resource.getYPosition()
      * 
      * You can get a list of all the units belonging to a player with the following command:
+<<<<<<< HEAD
      * state.getUnitIds(int playerNum): gives a list of all unit IDs belonging to the player.
+=======
+     * state.getUnitIds(int playerNum): gives a list of all unit IDs beloning to the player.
+>>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
      * You control player 0, the enemy controls player 1.
      * 
      * In order to see information about a specific unit, you must first get the UnitView
@@ -54,7 +58,11 @@ public class GameState {
      *
      * @param state Current state of the episode
      */
+<<<<<<< HEAD
     public GameState(State.StateView state) {
+=======
+    public GameState(State.StateView state) { //Create an attribute isPlayer which returns if this is a player
+>>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
     }
 
     /**
@@ -119,5 +127,10 @@ public class GameState {
      */
     public List<GameStateChild> getChildren() {
         return null;
+    }
+
+
+    public boolean isPlayer() {
+        return isPlayer;
     }
 }

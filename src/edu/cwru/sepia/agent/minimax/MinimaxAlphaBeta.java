@@ -4,6 +4,7 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
+<<<<<<< HEAD
 import edu.cwru.sepia.environment.model.state.Unit;
 
 import edu.cwru.sepia.action.Action;
@@ -21,6 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Comparator;
+=======
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+>>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
 
 public class MinimaxAlphaBeta extends Agent {
 
@@ -86,7 +94,46 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
-        return node;
+
+        if(depth == 0) { //maybe also add whether it's a terminal node, that might not be applicable to a zero-sum game though
+            return node;
+        }
+        if(node.state.isPlayer()) {
+            double maxVal = Double.NEGATIVE_INFINITY;
+            List<GameStateChild> children = node.state.getChildren();
+            GameStateChild nodeEval = node;
+            for(int i = 0; i < children.size(); i++) {
+                nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
+                maxVal = Math.max(maxVal, nodeEval.state.getUtility());
+                alpha = Math.max(alpha, maxVal);
+
+                if(beta <= alpha) {
+                    break;
+                }
+            }
+            if(nodeEval.state.getUtility() == maxVal) {
+                return nodeEval;
+            }
+            return node;
+        } else {
+            double minVal = Double.POSITIVE_INFINITY;
+            List<GameStateChild> children = node.state.getChildren();
+            GameStateChild nodeEval = node;
+            for(int i = 0; i < children.size(); i++) {
+                nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
+                minVal = Math.min(minVal, nodeEval.state.getUtility());
+                beta = Math.min(beta, minVal);
+
+                if(beta <= alpha) {
+                    break;
+                }
+            }
+            if(nodeEval.state.getUtility() == minVal) {
+                return nodeEval;
+            }
+            return node;
+        }
+
     }
 
     /**
@@ -101,6 +148,7 @@ public class MinimaxAlphaBeta extends Agent {
      *
      * @param children
      * @return The list of children sorted by your heuristic.
+<<<<<<< HEAD
      * equation: (
      */
     public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children){
@@ -145,4 +193,11 @@ public class MinimaxAlphaBeta extends Agent {
         return sumDistance;
     }
 
+=======
+     */
+    public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children)
+    {
+        return children;
+    }
+>>>>>>> ffd5fb968d1945d7f34f7a56918159e295e0f4ef
 }
