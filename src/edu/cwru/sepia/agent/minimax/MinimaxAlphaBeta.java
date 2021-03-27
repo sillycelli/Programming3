@@ -82,19 +82,33 @@ public class MinimaxAlphaBeta extends Agent {
         }
         double maxVal = Double.NEGATIVE_INFINITY;
         List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
-        GameStateChild nodeEval = node;
         for(int i = 0; i < children.size(); i++) {
-            nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
-            maxVal = Math.max(maxVal, nodeEval.state.getUtility());
-            alpha = Math.max(alpha, maxVal);
-
-            if(beta <= alpha) {
-                break;
+            maxVal = Math.max(maxVal, minVal(children.get(i), depth - 1, alpha, beta));
+            if(beta <= maxVal) {
+                return maxVal;
             }
+            alpha = Math.max(alpha, maxVal);
         }
+        return maxVal;
     }
 
-    public GameStateChild getBestState(GameStateChild node, double value) {
+    public double minVal(GameStateChild node, int depth, double alpha, double beta) {
+        if(depth == 0) {
+            return node.state.getUtility();
+        }
+        double minVal = Double.POSITIVE_INFINITY;
+        List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
+        for(int i = 0; i < children.size(); i++) {
+            minVal = Math.min(minVal, maxVal(children.get(i), depth - 1, alpha, beta));
+            if(alpha >= minVal) {
+                return minVal;
+            }
+            beta = Math.min(beta, minVal);
+        }
+        return minVal;
+    }
+
+    private GameStateChild getBestState(GameStateChild node, double value) {
         List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
         for(int i = 0; i < children.size(); i++) {
             if(value == children.get(i).state.getUtility()) {
