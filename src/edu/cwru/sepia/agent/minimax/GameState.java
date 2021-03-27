@@ -278,6 +278,16 @@ public class GameState {
      *
      * @return The weighted linear combination of the features
      */
+    /*
+    We wanted our utility function to incorporate three important aspects of the game: the footman's health, the
+    archer's health, and the distance between the footman and their closest enemy. The reason why we included the footman's
+    health is that, in a situation where the footman are attempting to kill the enemy, it's better for the footman to have
+    as much health as possible so they can hopefully not die by the time they reach and kill the archers. The main reason
+    why we included the archer's health (and associated it with a significant weight) is because the main goal
+    of the game is for the footmen to take all of the archer's health away. Lastly, we decided to include the distance between
+    the footman and their closest enemy is because the closer the footman is to the enemies, the closer the footman is within range
+    of attacking and killing the enemy.
+     */
     public double getUtility() {
         if (utilityComputed)
             return this.utility;
