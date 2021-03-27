@@ -180,7 +180,7 @@ public class GameState {
             board.addAgent(uv, true);
         }
 
-        for (Unit.UnitView uv : playerUnits) {
+        for (Unit.UnitView uv : enemyUnits) {
             board.addAgent(uv, false);
         }
 
@@ -219,6 +219,8 @@ public class GameState {
         this.board = new Board(state.board.xExtent, state.board.yExtent);
         this.board.resources = new ArrayList<>(state.board.resources);
         this.board.agents = new HashMap<>(state.board.agents);
+        this.board.goodAgents = state.board.goodAgents;
+        this.board.badAgents = state.board.badAgents;
 
         this.isPlayerTurn = !state.isPlayerTurn;
 
@@ -339,7 +341,6 @@ public class GameState {
         List<Map<Integer, Action>> l = cartesianProductOf2(actionsForEachAgent);
 
         return convertToGameStateChildList(l);
-
     }
 //      This is a more efficient version if we can assume only 2 in the actionList
     private List<Map<Integer, Action>> cartesianProductOf2(ArrayList<ArrayList<Action>> actionList) {
@@ -368,6 +369,7 @@ public class GameState {
 
         return maps;
     }
+
 //    This is a generalized version that should work for n in actionList
 //    private List<Map<Integer, Action>> enumerateActions(ArrayList<ArrayList<Action>> actionList) {
 //        ArrayList<Map<Integer, Action>> actionMaps = new ArrayList<>();
