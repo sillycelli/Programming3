@@ -3,11 +3,14 @@ package edu.cwru.sepia.agent.minimax;
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.action.ActionType;
 import edu.cwru.sepia.action.DirectedAction;
+import edu.cwru.sepia.action.TargetedAction;
+import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
 
+import javax.sound.sampled.TargetDataLine;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,8 +34,9 @@ public class GameState {
 //    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
 
     public class MMAgent {
-        private int health, id, xPos, yPos;
-        private Unit.UnitView uv;
+        private final int id, attackDmg, attackRange;
+        private int xPos, yPos, health;
+        private final Unit.UnitView uv;
 
         public MMAgent(Unit.UnitView uv) {
             this.uv = uv;
@@ -40,6 +44,8 @@ public class GameState {
             this.xPos = uv.getXPosition();
             this.yPos = uv.getYPosition();
             this.id = uv.getID();
+            this.attackDmg = uv.getTemplateView().getBasicAttack();
+            this.attackRange = uv.getTemplateView().getRange();
         }
 
         public int getXPos() {
@@ -52,6 +58,14 @@ public class GameState {
 
         public int getID() {
             return id;
+        }
+
+        public int getAttackDmg() {
+            return attackDmg;
+        }
+
+        public int getAttackRange() {
+            return attackRange;
         }
 
         public int getHP() {
@@ -132,6 +146,12 @@ public class GameState {
             MMAgent agent = agents.get(id);
             agent.xPos = agent.xPos + dx;
             agent.yPos = agent.yPos + dy;
+        }
+
+        public void attackAgent(int attacker, int attacked) {
+            MMAgent aAttacker = getAgent(attacker);
+            MMAgent aAttacked = getAgent(attacked);
+            aAttacked.health = aAttacker.getAttackDmg();
         }
 
     }
@@ -478,6 +498,9 @@ public class GameState {
             if (action.getType() == ActionType.PRIMITIVEMOVE) {
                 Direction dir = ((DirectedAction) action).getDirection();
                 board.moveAgent(action.getUnitId(), dir.xComponent(), dir.yComponent());
+            } else if (action.getType() == ActionType.PRIMITIVEATTACK) {
+                TargetedAction ta = (TargetedAction) action;
+                board.attackAgent(ta.getUnitId(), ta.getTargetId());
             }
         }
 }
