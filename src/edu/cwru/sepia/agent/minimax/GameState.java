@@ -228,6 +228,9 @@ public class GameState {
 
         this.isPlayerTurn = !state.isPlayerTurn;
 
+        playerIDs = state.getUnitIds(0);
+        enemyIDs = state.getUnitIds(1);
+
 //        this.xExtent = state.xExtent;
 //        this.yExtent = state.yExtent;
 //        this.resourceIDs = state.resourceIDs;
