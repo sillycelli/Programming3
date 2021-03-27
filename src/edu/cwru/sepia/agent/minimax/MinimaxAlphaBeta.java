@@ -73,6 +73,38 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
+        return getBestState(node, maxVal(node, depth, alpha, beta));
+    }
+
+    public double maxVal(GameStateChild node, int depth, double alpha, double beta) {
+        if(depth == 0) {
+            return node.state.getUtility();
+        }
+        double maxVal = Double.NEGATIVE_INFINITY;
+        List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
+        GameStateChild nodeEval = node;
+        for(int i = 0; i < children.size(); i++) {
+            nodeEval = alphaBetaSearch(children.get(i), depth - 1, alpha, beta);
+            maxVal = Math.max(maxVal, nodeEval.state.getUtility());
+            alpha = Math.max(alpha, maxVal);
+
+            if(beta <= alpha) {
+                break;
+            }
+        }
+    }
+
+    public GameStateChild getBestState(GameStateChild node, double value) {
+        List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
+        for(int i = 0; i < children.size(); i++) {
+            if(value == children.get(i).state.getUtility()) {
+                return children.get(i);
+            }
+        }
+    }
+
+    /*public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
+    {
 
         if(depth == 0) { //maybe also add whether it's a terminal node, that might not be applicable to a zero-sum game though
             return node;
@@ -113,7 +145,7 @@ public class MinimaxAlphaBeta extends Agent {
             return node;
         }
 
-    }
+    }*/
 
     /**
      * You will implement this.
