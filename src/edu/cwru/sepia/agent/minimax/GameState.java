@@ -54,6 +54,10 @@ public class GameState {
             return id;
         }
 
+        public int getHP() {
+            return health;
+        }
+
         public Unit.UnitView getUV() {
             return uv;
         }
@@ -277,11 +281,45 @@ public class GameState {
     public double getUtility() {
         if (utilityComputed)
             return this.utility;
-
-        this.utility = ThreadLocalRandom.current().nextDouble(-100, 100);
+        //this.utility = ThreadLocalRandom.current().nextDouble(-100, 100);
         this.utilityComputed = true;
+        double sumDistance = 0;
+        int playerHealth = 0;
+        int enemyHealth = 0;
+        //The sum all of the distances between the footman and the archers
+        double enemyOneDistance, enemyTwoDistance = 0;
+        if(board.badAgents.size() == 1){
+            for(MMAgent player : board.goodAgents){
+                sumDistance += straightLineDistance(board.badAgents.get(0).getXPos(), board.badAgents.get(0).getYPos(), player.getXPos(), player.getYPos());
+            }
+        }
+        else{
+            for(MMAgent player : board.goodAgents) {
+                enemyOneDistance = straightLineDistance(board.badAgents.get(0).getXPos(), board.badAgents.get(0).getYPos(), player.getXPos(), player.getYPos());
+                enemyTwoDistance = straightLineDistance(board.badAgents.get(1).getXPos(), board.badAgents.get(1).getYPos(), player.getXPos(), player.getYPos());
+                sumDistance += Math.min(enemyTwoDistance, enemyOneDistance)/2;
+            }
+        }
+        //the sum of all the player health and the sume of all the enemy health
+        for(MMAgent player : board.goodAgents){
+            playerHealth += player.getHP();
+        }
 
+        for(MMAgent enemy : board.badAgents){
+            enemyHealth += enemy.getHP();
+        }
+
+        //the individual weights for each feature in the utility
+        double playerHealthWeight = 2.0;
+        double enemyHealthWeight = -15.0;
+        double distanceBetweenWeight = 7.0;
+
+        this.utility = (distanceBetweenWeight * sumDistance) + (enemyHealthWeight * enemyHealth) + (playerHealthWeight * playerHealth);
         return this.utility;
+    }
+
+    public double straightLineDistance(int xOne, int yOne, int xTwo, int yTwo){
+        return Math.sqrt(Math.pow((xTwo-xOne), 2) + Math.pow((yTwo-yOne), 2));
     }
 
 
