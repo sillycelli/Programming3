@@ -325,7 +325,7 @@ public class GameState {
         //the individual weights for each feature in the utility
         double playerHealthWeight = 2.0;
         double enemyHealthWeight = -15.0;
-        double distanceBetweenWeight = 7.0;
+        double distanceBetweenWeight = -7.0;
 
         this.utility = (distanceBetweenWeight * sumDistance) + (enemyHealthWeight * enemyHealth) + (playerHealthWeight * playerHealth);
         return this.utility;
