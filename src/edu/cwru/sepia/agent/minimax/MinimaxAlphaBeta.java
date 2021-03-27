@@ -77,7 +77,7 @@ public class MinimaxAlphaBeta extends Agent {
         if(depth == 0) { //maybe also add whether it's a terminal node, that might not be applicable to a zero-sum game though
             return node;
         }
-        if(node.state.isPlayer()) {
+        if(node.state.isPlayerTurn()) {
             double maxVal = Double.NEGATIVE_INFINITY;
             List<GameStateChild> children = node.state.getChildren();
             GameStateChild nodeEval = node;
@@ -159,13 +159,13 @@ public class MinimaxAlphaBeta extends Agent {
         int enemyTwoDistance = 0;
         if(enemyUnits.size() == 1){
             for(Integer playerID : playerUnits){
-                sumDistance += Math.abs(child.state.getUnit(playerID).getXPosition() - child.state.getUnit(enemyUnits.get(0)).getXPosition()) + Math.abs(child.state.getUnit(playerID).getYPosition() - child.state.getUnit(enemyUnits.get(0)).getYPosition());
+                sumDistance += Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(0)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(0)).getYPos());
             }
         }
         else{
             for(Integer playerID : playerUnits) {
-                enemyOneDistance = Math.abs(child.state.getUnit(playerID).getXPosition() - child.state.getUnit(enemyUnits.get(0)).getXPosition()) + Math.abs(child.state.getUnit(playerID).getYPosition() - child.state.getUnit(enemyUnits.get(0)).getYPosition());
-                enemyTwoDistance = Math.abs(child.state.getUnit(playerID).getXPosition() - child.state.getUnit(enemyUnits.get(1)).getXPosition()) + Math.abs(child.state.getUnit(playerID).getYPosition() - child.state.getUnit(enemyUnits.get(1)).getYPosition());
+                enemyOneDistance = Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(0)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(0)).getYPos());
+                enemyTwoDistance = Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(1)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(1)).getYPos());
                 sumDistance += Math.min(enemyTwoDistance, enemyOneDistance);
             }
         }

@@ -25,12 +25,12 @@ public class GameState {
     private boolean isPlayerTurn, utilityComputed;
     private double utility;
 //    private int xExtent, yExtent;
-//    private List<Integer> resourceIDs, playerUnitIDs, enemyUnitIDs;
+    private List<Integer>  playerIDs, enemyIDs;
 //    private List<ResourceNode.ResourceView> resourceNodes;
 //    private List<Unit.UnitView> playerUnits, enemyUnits;
 //    private HashMap<Integer, Unit.UnitView> hashEntityUnits;
 
-    private class MMAgent {
+    public class MMAgent {
         private int health, id, xPos, yPos;
         private Unit.UnitView uv;
 
@@ -170,6 +170,9 @@ public class GameState {
     public GameState(State.StateView state) {
         board = new Board(state.getXExtent(), state.getYExtent());
 
+        playerIDs = state.getUnitIds(0);
+        enemyIDs = state.getUnitIds(1);
+
         List<Unit.UnitView> playerUnits = state.getUnits(0);
         List<Unit.UnitView> enemyUnits = state.getUnits(1);
 
@@ -238,6 +241,18 @@ public class GameState {
 //        return board.getAgent(id).uv;
 //
 //    }
+
+    public boolean isPlayerTurn() {
+        return isPlayerTurn;
+    }
+
+    public List<Integer> getUnitIds(int player) {
+        return player == 0 ? playerIDs : enemyIDs;
+    }
+
+    public MMAgent getAgent(int id) {
+        return board.getAgent(id);
+    }
 
     /**
      * You will implement this function.
