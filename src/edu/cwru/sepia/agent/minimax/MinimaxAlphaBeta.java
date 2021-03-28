@@ -73,11 +73,6 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
-        List<GameStateChild> children = node.state.getChildren();
-        for(int i = 0; i < children.size(); i++) {
-            System.out.println("Child at " + i + ": " + children.get(i).state.getUtility());
-        }
-        System.out.println("size: " + children.size());
         return getBestState(node, maxVal(node, depth, alpha, beta));
     }
 
@@ -185,27 +180,39 @@ public class MinimaxAlphaBeta extends Agent {
      */
 
     public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children){
-
-        PriorityQueue<GameStateChild> orderingChildren = new PriorityQueue<GameStateChild>(new Comparator<GameStateChild>() {
-            @Override
-            public int compare(GameStateChild childOne, GameStateChild childTwo) {
-                return Integer.compare(
-                        heuristic(childOne), heuristic(childTwo));
-            }
-        });
+        List<GameStateChild> ordered = new LinkedList<GameStateChild>();
+        List<GameStateChild> moves = new LinkedList<GameStateChild>();
         for(GameStateChild child : children){
-            orderingChildren.add(child);
+            int numAttacks = 0;
+            for(Action action : child.action.values()){
+                if(action.getType().name().equals(GameState.ACTION_ATTACK_NAME)){
+                    numAttacks++;
+                }
+            }
+            if(numAttacks == child.action.size()){
+                ordered.add(0, child);
+            } else if (numAttacks > 0){
+                if(ordered.isEmpty()){
+                    ordered.add(0, child);
+                } else {
+                    ordered.add(1, child);
+                }
+            } else {
+                moves.add(child);
+            }
         }
-
-        ArrayList<GameStateChild> orderedChildren = new ArrayList<GameStateChild>(orderingChildren.size());
-        while (!orderingChildren.isEmpty()) {
-            orderedChildren.add(orderingChildren.poll());
-        }
-
-        return orderedChildren;
+        moves.sort(COMPARATOR);
+        ordered.addAll(moves);
+        return ordered;
     }
 
-    public int heuristic(GameStateChild child) {
-        return 1;
-    }
+    private static final Comparator<GameStateChild> COMPARATOR = (o1, o2) -> {
+        if(o1.state.getUtility() > o2.state.getUtility()){
+            return -1;
+        } else if (o1.state.getUtility() < o2.state.getUtility()){
+            return 1;
+        } else {
+            return 0;
+        }
+    };
 }
