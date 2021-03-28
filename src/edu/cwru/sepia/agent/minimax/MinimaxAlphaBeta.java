@@ -205,13 +205,7 @@ public class MinimaxAlphaBeta extends Agent {
         moves.sort(new Comparator<GameStateChild>() {
             @Override
             public int compare(GameStateChild gameStateChild, GameStateChild t1) {
-                if(gameStateChild.state.getUtility() > t1.state.getUtility()){
-                    return -1;
-                } else if (gameStateChild.state.getUtility() < t1.state.getUtility()){
-                    return 1;
-                } else {
-                    return 0;
-                }
+                return Double.compare(gameStateChild.state.getUtility(), t1.state.getUtility());
             }
         });
         ordered.addAll(moves);
