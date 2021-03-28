@@ -21,7 +21,7 @@ public class GameState {
     public static final String ACTION_MOVE_NAME = Action.createPrimitiveMove(0, null).getType().name();
     public static final String ACTION_ATTACK_NAME = Action.createPrimitiveAttack(0, 0).getType().name();
 
-    private Board board;
+    private final Board board;
     private final boolean isPlayerTurn;
     private boolean utilityCalculated = false;
     private double utility = 0.0;
@@ -30,16 +30,14 @@ public class GameState {
      * Class containing agents and resources (with locations) and several helper methods
      */
     private class Board {
-//        private Square[][] board;
-        private boolean[][] isOccupied;
-        private Map<Integer, MMAgent> agents = new HashMap<Integer, MMAgent>(4);
-        private ArrayList<MMAgent> goodAgents = new ArrayList<MMAgent>(2);
-        private ArrayList<MMAgent> badAgents = new ArrayList<MMAgent>(2);
-        private Map<Integer, Resource> resources = new HashMap<Integer, Resource>();
+        private final boolean[][] isOccupied;
+        private final Map<Integer, MMAgent> agents = new HashMap<Integer, MMAgent>(4);
+        private final ArrayList<MMAgent> goodAgents = new ArrayList<MMAgent>(2);
+        private final ArrayList<MMAgent> badAgents = new ArrayList<MMAgent>(2);
+        private final Map<Integer, Resource> resources = new HashMap<Integer, Resource>();
         private final int width, height;
 
         public Board(int x, int y) {
-//            board = new Square[x][y];
             isOccupied = new boolean[x][y];
             this.width = x;
             this.height = y;
@@ -47,14 +45,12 @@ public class GameState {
 
         public void addResource(int id, int x, int y) {
             Resource resource = new Resource(id, x, y);
-//            board[x][y] = resource;
             isOccupied[x][y] = true;
             resources.put(resource.getID(), resource);
         }
 
         public void addAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
             MMAgent agent = new MMAgent(id, x, y, hp, possibleHp, attackDamage, attackRange);
-//            board[x][y] = agent;
             agents.put(id, agent);
             if (agent.isGood()) {
                 goodAgents.add(agent);
@@ -69,10 +65,8 @@ public class GameState {
             int currentY = agent.getY();
             int nextX = currentX + xOffset;
             int nextY = currentY + yOffset;
-//            board[currentX][currentY] = null;
             agent.setX(nextX);
             agent.setY(nextY);
-//            board[nextX][nextY] = agent;
         }
 
         public void attackAgent(MMAgent attacker, MMAgent attacked) {
@@ -81,17 +75,9 @@ public class GameState {
             }
         }
 
-//        public boolean isEmpty(int x, int y) {
-//            return board[x][y] == null;
-//        }
-
         public boolean isEmpty(int x, int y) {
             return !isOccupied[x][y];
         }
-
-//        public boolean isResource(int x, int y) {
-//            return board[x][y] != null && resources.containsKey(board[x][y].id);
-//        }
 
         public boolean isResource(int x, int y) {
             return isOccupied[x][y];
@@ -137,7 +123,7 @@ public class GameState {
             return alive;
         }
 
-        public double distance(Square agent1, Square agent2) {
+        public double distance(MMAgent agent1, MMAgent agent2) {
             return (Math.abs(agent1.getX() - agent2.getX()) + Math.abs(agent1.getY() - agent2.getY())) - 1;
         }
 
@@ -157,25 +143,64 @@ public class GameState {
         }
     }
 
+//    /**
+//     * Represents a single location or square on the playing board
+//     */
+//    private abstract class Square {
+//        private final int id;
+//        private int x, y;
+//
+//        public Square(int id, int x, int y) {
+//            this.id = id;
+//            this.x = x;
+//            this.y = y;
+//        }
+//
+//        public int getID() {
+//            return this.id;
+//        }
+//
+//        public int getX() {
+//            return this.x;
+//        }
+//
+//        public void setX(int x) {
+//            this.x = x;
+//        }
+//
+//        public int getY() {
+//            return this.y;
+//        }
+//
+//        public void setY(int y) {
+//            this.y = y;
+//        }
+//    }
+
     /**
-     * Represents a single location or square on the playing board
+     * A representation of an agent either good (footman) or bad (archer)
      */
-    private abstract class Square {
-        private final int id;
+    private class MMAgent {
+        private int hp;
+        private final int possibleHp, attackDamage, attackRange, id;
         private int x, y;
 
-        public Square(int id, int x, int y) {
+        public MMAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
             this.id = id;
             this.x = x;
             this.y = y;
+            this.hp = hp;
+            this.possibleHp = possibleHp;
+            this.attackDamage = attackDamage;
+            this.attackRange = attackRange;
         }
 
         public int getID() {
-            return this.id;
+            return id;
         }
 
         public int getX() {
-            return this.x;
+            return x;
         }
 
         public void setX(int x) {
@@ -183,27 +208,11 @@ public class GameState {
         }
 
         public int getY() {
-            return this.y;
+            return y;
         }
 
         public void setY(int y) {
             this.y = y;
-        }
-    }
-
-    /**
-     * A representation of an agent either good (footman) or bad (archer)
-     */
-    private class MMAgent extends Square {
-        private int hp;
-        private final int possibleHp, attackDamage, attackRange;
-
-        public MMAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
-            super(id, x, y);
-            this.hp = hp;
-            this.possibleHp = possibleHp;
-            this.attackDamage = attackDamage;
-            this.attackRange = attackRange;
         }
 
         public boolean isGood() {
@@ -238,9 +247,25 @@ public class GameState {
     /**
      * A representation of non-agents on the board - trees
      */
-    private class Resource extends Square {
+    private class Resource {
+        private final int id, x, y;
+        
         public Resource(int id, int x, int y) {
-            super(id, x, y);
+            this.id = id;
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getID() {
+            return id;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
         }
     }
 
