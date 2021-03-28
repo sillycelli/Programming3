@@ -9,6 +9,7 @@ import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,29 +29,28 @@ public class GameState {
     private List<Integer> playerIDs, enemyIDs;
 
     private class Board {
-        private Square[][] board;
-        private Map<Integer, MMAgent> agents = new HashMap<Integer, MMAgent>(4);
-        private ArrayList<MMAgent> goodAgents = new ArrayList<MMAgent>(2);
-        private ArrayList<MMAgent> badAgents = new ArrayList<MMAgent>(2);
+        private boolean[][] board;
+        private Map<Integer, MMAgent> agents = new HashMap<Integer, MMAgent>();
+        private ArrayList<MMAgent> goodAgents = new ArrayList<MMAgent>();
+        private ArrayList<MMAgent> badAgents = new ArrayList<MMAgent>();
         private Map<Integer, Resource> resources = new HashMap<Integer, Resource>();
-        private int width;
-        private int height;
+        private final int width, height;
 
         public Board(int x, int y) {
-            board = new Square[x][y];
+            board = new boolean[x][y];
             this.width = x;
             this.height = y;
         }
 
         public void addResource(int id, int x, int y) {
             Resource resource = new Resource(id, x, y);
-            board[x][y] = resource;
+            board[x][y] = true;
             resources.put(resource.getID(), resource);
         }
 
         public void addAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
             MMAgent agent = new MMAgent(id, x, y, hp, possibleHp, attackDamage, attackRange);
-            board[x][y] = agent;
+//            board[x][y] = agent;
             agents.put(id, agent);
             if (agent.isGood()) {
                 goodAgents.add(agent);
@@ -65,10 +65,10 @@ public class GameState {
             int currentY = agent.getY();
             int nextX = currentX + xOffset;
             int nextY = currentY + yOffset;
-            board[currentX][currentY] = null;
+//            board[currentX][currentY] = null;
             agent.setX(nextX);
             agent.setY(nextY);
-            board[nextX][nextY] = agent;
+//            board[nextX][nextY] = agent;
         }
 
         public void attackAgent(MMAgent attacker, MMAgent attacked) {
@@ -79,11 +79,11 @@ public class GameState {
 
 
         public boolean canMove(int x, int y) {
-            return x > 0 && y > 0 && x < width && y < width && board[x][y] == null;
+            return x > 0 && y > 0 && x < width && y < width && !board[x][y];
         }
 
         public boolean isResource(int x, int y) {
-            return board[x][y] != null && resources.containsKey(board[x][y].id);
+            return board[x][y];
         }
 
 
@@ -95,19 +95,31 @@ public class GameState {
             return agent;
         }
 
-        public Collection<MMAgent> getAllAgents() {
-            return agents.values();
+        public ArrayList<MMAgent> getAllAgents() {
+            return new ArrayList<>(agents.values());
         }
 
-        public Collection<MMAgent> getAliveGoodAgents() {
-            return goodAgents.stream().filter(e -> e.isAlive()).collect(Collectors.toList());
+        public ArrayList<MMAgent> getAliveGoodAgents() {
+            ArrayList<MMAgent> alive = new ArrayList<>();
+            for (MMAgent a : this.goodAgents) {
+                if (a.isAlive())
+                    alive.add(a);
+            }
+
+            return alive;
         }
 
-        public Collection<MMAgent> getAliveBadAgents() {
-            return badAgents.stream().filter(e -> e.isAlive()).collect(Collectors.toList());
+        public ArrayList<MMAgent> getAliveBadAgents() {
+            ArrayList<MMAgent> alive = new ArrayList<>();
+            for (MMAgent a : this.badAgents) {
+                if (a.isAlive())
+                    alive.add(a);
+            }
+
+            return alive;
         }
 
-        public double distance(Square agent1, Square agent2) {
+        public double distance(MMAgent agent1, MMAgent agent2) {
             return (Math.abs(agent1.getX() - agent2.getX()) + Math.abs(agent1.getY() - agent2.getY())) - 1;
         }
 
@@ -130,49 +142,17 @@ public class GameState {
     /**
      * Represents a single location or square on the playing board
      */
-    private abstract class Square {
-        private int id;
-        private int x;
-        private int y;
-
-        public Square(int id, int x, int y) {
-            this.id = id;
-            this.x = x;
-            this.y = y;
-        }
-
-        public int getID() {
-            return this.id;
-        }
-
-        public int getX() {
-            return this.x;
-        }
-
-        public void setX(int x) {
-            this.x = x;
-        }
-
-        public int getY() {
-            return this.y;
-        }
-
-        public void setY(int y) {
-            this.y = y;
-        }
-    }
 
     /**
      * A representation of an agent either good (footman) or bad (archer)
      */
-    private class MMAgent extends Square {
-        private int hp;
-        private int possibleHp;
-        private int attackDamage;
-        private int attackRange;
+    private class MMAgent {
+        private int hp, possibleHp, attackDamage, attackRange, id, x, y;
 
         public MMAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
-            super(id, x, y);
+            this.x = x;
+            this.y = y;
+            this.id = id;
             this.hp = hp;
             this.possibleHp = possibleHp;
             this.attackDamage = attackDamage;
@@ -180,11 +160,31 @@ public class GameState {
         }
 
         public boolean isGood() {
-            return this.getID() == 0 || this.getID() == 1;
+            return id == 0 || id == 1;
         }
 
         public boolean isAlive() {
             return hp > 0;
+        }
+
+        public int getID() {
+            return id;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public void setX(int x) {
+            this.x = x;
+        }
+
+        public void setY(int y) {
+            this.y = y;
         }
 
         private int getHP() {
@@ -206,14 +206,30 @@ public class GameState {
         private int getAttackRange() {
             return attackRange;
         }
+
     }
 
     /**
      * A representation of non-agents on the board - trees
      */
-    private class Resource extends Square {
+    private class Resource {
+        private int id, x, y;
         public Resource(int id, int x, int y) {
-            super(id, x, y);
+            this.id = id;
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getID() {
+            return id;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
         }
     }
 
@@ -649,39 +665,39 @@ public class GameState {
 
     private static final Direction[] AGENT_POSSIBLE_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
-    public List<GameStateChild> getChildren() {
-        ArrayList<MMAgent> agentsActiveThisTurn;
-        if (isPlayerTurn) {
-            agentsActiveThisTurn = this.board.goodAgents;
-        } else {
-            agentsActiveThisTurn = this.board.badAgents;
-        }
-        List<List<Action>> actionsForEachAgent = agentsActiveThisTurn.stream()
-                .map(this::getAgentActions)
-                .collect(Collectors.toList());
-        List<Map<Integer, Action>> actionMaps = cartesianProductOf2(actionsForEachAgent);
-        return convertToGameStateChildList(actionMaps);
-    }
-
 //    public List<GameStateChild> getChildren() {
-//        ArrayList<GameStateChild> gsc = new ArrayList<>();
-//
-//        ArrayList<MMAgent> agents = board.getAgents(this.isPlayerTurn ? 0 : 1);
-//
-//        ArrayList<ArrayList<Action>> actionsForEachAgent = new ArrayList<>();
-//
-//        for (MMAgent agent : agents) {
-//            actionsForEachAgent.add(getAgentActions(agent));
+//        ArrayList<MMAgent> agentsActiveThisTurn;
+//        if (isPlayerTurn) {
+//            agentsActiveThisTurn = this.board.goodAgents;
+//        } else {
+//            agentsActiveThisTurn = this.board.badAgents;
 //        }
-//
-//        List<Map<Integer, Action>> l = cartesianProductOf2(actionsForEachAgent);
-//        List<GameStateChild> gameStateChildren = convertToGameStateChildList(l);
-//
-//        return gameStateChildren;
+//        List<List<Action>> actionsForEachAgent = agentsActiveThisTurn.stream()
+//                .map(this::getAgentActions)
+//                .collect(Collectors.toList());
+//        List<Map<Integer, Action>> actionMaps = cartesianProductOf2(actionsForEachAgent);
+//        return convertToGameStateChildList(actionMaps);
 //    }
 
+    public List<GameStateChild> getChildren() {
+        ArrayList<GameStateChild> gsc = new ArrayList<>();
+
+        ArrayList<MMAgent> agents = isPlayerTurn ? board.getAliveGoodAgents() : board.getAliveBadAgents();
+
+        ArrayList<ArrayList<Action>> actionsForEachAgent = new ArrayList<>();
+
+        for (MMAgent agent : agents) {
+            actionsForEachAgent.add(getAgentActions(agent));
+        }
+
+        List<Map<Integer, Action>> l = cartesianProductOf2(actionsForEachAgent);
+        List<GameStateChild> gameStateChildren = convertToGameStateChildList(l);
+
+        return gameStateChildren;
+    }
+
     //      This is a more efficient version if we can assume only 2 in the actionList
-    private List<Map<Integer, Action>> cartesianProductOf2(List<List<Action>> actionList) {
+    private List<Map<Integer, Action>> cartesianProductOf2(ArrayList<ArrayList<Action>> actionList) {
         ArrayList<Map<Integer, Action>> maps = new ArrayList<>();
 
         List<Action> firstActions = actionList.get(0);
