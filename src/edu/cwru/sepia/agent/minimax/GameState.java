@@ -88,7 +88,7 @@ public class GameState {
 
 
         public boolean canMove(int x, int y) {
-            return x > 0 && y > 0 && x < width && y < width && !board[x][y];
+            return x > 0 && y > 0 && x < width && y < height && !board[x][y];
         }
 
         public boolean isResource(int x, int y) {
@@ -365,15 +365,182 @@ public class GameState {
         if(this.utilityComputed){
             return this.utility;
         }
-        this.utility += locationUtility();
 
-        for (MMAgent a : board.goodAgents) {
-            if (a.backwards)
-                this.utility -= 50000;
-        }
+        // Calculate features included
+        this.utility += getHasGoodAgentsUtility();
+        this.utility += getHasBadAgentsUtility();
+        this.utility += getHealthUtility();
+        this.utility += getDamageToEnemyUtility();
+        this.utility += getCanAttackUtility();
+        this.utility += getLocationUtility();
 
         this.utilityComputed = true;
         return this.utility;
+    }
+
+    /**
+     * @return the number of good agents or the MIN_UTILITY if all good agents are dead (the game is over and we lost) 
+     */
+    private double getHasGoodAgentsUtility() {
+        return this.board.getAliveGoodAgents().isEmpty() ? Double.NEGATIVE_INFINITY : this.board.getAliveGoodAgents().size();
+    }
+
+    /**
+     * @return the number of bad agents or the MAX_UTILITY if all bad agents are dead (the game is over and we won) 
+     */
+    private double getHasBadAgentsUtility() {
+        return this.board.getAliveBadAgents().isEmpty() ? Double.POSITIVE_INFINITY : this.board.getAliveBadAgents().size();
+    }
+
+    /**
+     * @return the amount of health each footman has
+     */
+    private double getHealthUtility() {
+        double utility = 0.0;
+        for(MMAgent agent : this.board.getAliveGoodAgents()){
+            utility += agent.getHP()/agent.getPossibleHp();
+        }
+        return utility;
+    }
+
+    /**
+     * @return how much damage has been done to each archer
+     */
+    private double getDamageToEnemyUtility() {
+        double utility = 0.0;
+        for(MMAgent agent : this.board.getAliveBadAgents()){
+            utility += agent.getPossibleHp() - agent.getHP();
+        }
+        return utility;
+    }
+
+    /**
+     * @return the number of agents that are within range of the footmen
+     */
+    private double getCanAttackUtility() {
+        double utility = 0.0;
+        for(MMAgent agent : this.board.getAliveGoodAgents()){
+            utility += this.board.findAttackableAgents(agent).size();
+        }
+        return utility;
+    }
+
+    /**
+     * @return how optimal the footman positions are attempts to deal with obstacles (resources)
+     */
+    private double getLocationUtility() {
+        if(this.board.resources.isEmpty() ||
+                noResourcesAreInTheArea()){
+            return distanceFromEnemy() * -1;
+        }
+        double percentageBlocked = percentageOfBlockedFootmen();
+        if(percentageBlocked > 0){
+            return -200000 * percentageBlocked;
+        }
+        return distanceFromEnemy() * -1;
+    }
+
+    /**
+     * a footman is blocked when the diaganol path between it an the enemy is blocked by trees
+     * @return  number of blocked footman / total number of footmen
+     */
+    private double percentageOfBlockedFootmen() {
+        int numBlocked = 0;
+        int totalNumGood = 0;
+        for(MMAgent goodGuy : this.board.getAliveGoodAgents()){
+            MMAgent badGuy = this.getClosestEnemy(goodGuy);
+            if(badGuy != null){
+                int i = goodGuy.getX();
+                int j = goodGuy.getY();
+                while(i != badGuy.getX() || j != badGuy.getY()){
+                    if(this.board.isOnBoard(i, j) && this.board.isResource(i, j) ){
+                        numBlocked++;
+                    }
+                    if(i < badGuy.getX()){
+                        i++;
+                    } else if (i > badGuy.getX()) {
+                        i--;
+                    }
+                    if(j < badGuy.getY()){
+                        j++;
+                    } else if(j > badGuy.getY()){
+                        j--;
+                    }
+                }
+            }
+            totalNumGood++;
+        }
+        if(totalNumGood == 0){
+            return 0;
+        }
+        return numBlocked/totalNumGood;
+    }
+
+    /**
+     * @return true if no resources even near either footman archer pair
+     */
+    private boolean noResourcesAreInTheArea(){
+        int count = 0;
+        int numGood = 0;
+        for(MMAgent goodGuy : this.board.getAliveGoodAgents()){
+            for(MMAgent badGuy : this.board.getAliveBadAgents()){
+                if(numResourceInAreaBetween(goodGuy, badGuy) != 0){
+                    count++;
+                }
+            }
+            numGood++;
+        }
+        return count < numGood;
+    }
+
+    /**
+     * @param goodGuy
+     * @param badGuy
+     * @return the number of resources in the largest rectangle possible between the two agent's coordinates 
+     */
+    private double numResourceInAreaBetween(MMAgent goodGuy, MMAgent badGuy){
+        double resources = 0.0;
+        for(int i = Math.min(goodGuy.getX(), badGuy.getX()); i < Math.max(goodGuy.getX(), badGuy.getX()); i++){
+            for(int j = Math.min(goodGuy.getY(), badGuy.getY()); j < Math.max(goodGuy.getY(), badGuy.getY()); j++){
+                if(this.board.isResource(i, j)){
+                    resources += 1;
+                }
+            }
+        }
+        return resources;
+    }
+
+    /**
+     * @return the sum of the distances to the closest enemy for each footman
+     */
+    private double distanceFromEnemy() {
+        double utility = 0.0;
+        for(MMAgent goodAgent : this.board.getAliveGoodAgents()){
+            double value = Double.POSITIVE_INFINITY;
+            for(MMAgent badAgent : this.board.getAliveBadAgents()){
+                value = Math.min(this.board.distance(goodAgent, badAgent), value);
+            }
+            if(value != Double.POSITIVE_INFINITY){
+                utility += value;
+            }
+        }
+        return utility;
+    }
+
+    /**
+     * @param goodAgent
+     * @return the closest aarcher to the footman given
+     */
+    private MMAgent getClosestEnemy(MMAgent goodAgent) {
+        MMAgent closestEnemy = null;
+        for(MMAgent badAgent : this.board.getAliveBadAgents()){
+            if(closestEnemy == null){
+                closestEnemy = badAgent;
+            } else if(this.board.distance(goodAgent, badAgent) < this.board.distance(goodAgent, closestEnemy)){
+                closestEnemy = badAgent;
+            }
+        }
+        return closestEnemy;
     }
 
     private double locationUtility() {
@@ -555,6 +722,9 @@ public class GameState {
     private List<Map<Integer, Action>> cartesianProductOf2(ArrayList<ArrayList<Action>> actionList) {
         ArrayList<Map<Integer, Action>> maps = new ArrayList<>();
 
+        if (actionList.size() == 0)
+            return maps;
+
         List<Action> firstActions = actionList.get(0);
         for (Action action : firstActions) {
             if (actionList.size() == 1) {
@@ -635,30 +805,6 @@ public class GameState {
         return actions;
     }
 
-//    private ArrayList<Action> getAgentActions(MMAgent agent) {
-//        ArrayList<Action> actions = new ArrayList<>();
-//
-//        for (Direction d : Direction.values()) {
-//            int tx = agent.getXPos() + d.xComponent();
-//            int ty = agent.getYPos() + d.yComponent();
-//            if (board.canMove(tx, ty))
-//                actions.add(Action.createPrimitiveMove(agent.getID(), d));
-//        }
-//
-//        for (MMAgent goodAgent : board.goodAgents) {
-//            for (MMAgent badAgent : board.badAgents) {
-//                double d = Math.hypot(goodAgent.getXPos() - badAgent.getXPos(), goodAgent.getYPos() - badAgent.getYPos());
-//                if (d < badAgent.getAttackRange()) {
-//                    actions.add(Action.createPrimitiveAttack(badAgent.getID(), goodAgent.getID()));
-//                }
-//                if (d < goodAgent.getAttackRange()) {
-//                    actions.add(Action.createPrimitiveAttack(goodAgent.getID(), badAgent.getID()));
-//                }
-//            }
-//        }
-//
-//        return actions;
-//    }
 
     private void applyAction(Action action) {
         if (action.getType() == ActionType.PRIMITIVEMOVE) {
