@@ -50,7 +50,6 @@ public class GameState {
 
         public void addAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
             MMAgent agent = new MMAgent(id, x, y, hp, possibleHp, attackDamage, attackRange);
-//            board[x][y] = agent;
             agents.put(id, agent);
             if (agent.isGood()) {
                 goodAgents.add(agent);
@@ -65,10 +64,20 @@ public class GameState {
             int currentY = agent.getY();
             int nextX = currentX + xOffset;
             int nextY = currentY + yOffset;
-//            board[currentX][currentY] = null;
+
+            if (nextX == agent.px && nextY == agent.py) {
+                agent.backwards = true;
+                System.out.println("GOING BACKWARDS");
+            }
+            else {
+                agent.backwards = false;
+            }
+
             agent.setX(nextX);
             agent.setY(nextY);
-//            board[nextX][nextY] = agent;
+
+            agent.py = currentY;
+            agent.px = currentY;
         }
 
         public void attackAgent(MMAgent attacker, MMAgent attacked) {
@@ -152,6 +161,8 @@ public class GameState {
      */
     private class MMAgent {
         private int hp, possibleHp, attackDamage, attackRange, id, x, y;
+        private int px, py;
+        private boolean backwards = false;
 
         public MMAgent(int id, int x, int y, int hp, int possibleHp, int attackDamage, int attackRange) {
             this.x = x;
@@ -161,6 +172,9 @@ public class GameState {
             this.possibleHp = possibleHp;
             this.attackDamage = attackDamage;
             this.attackRange = attackRange;
+
+            this.px = x;
+            this.py = y;
         }
 
         public boolean isGood() {
@@ -346,105 +360,18 @@ public class GameState {
     of attacking and killing the enemy.
      */
 
-//
-//
-////        if (utilityComputed)
-////            return this.utility;
-////        //this.utility = ThreadLocalRandom.current().nextDouble(-100, 100);
-////        this.utilityComputed = true;
-////        double sumDistance = 0;
-////        int playerHealth = 0;
-////        int enemyHealth = 0;
-////        //The sum all of the distances between the footman and the archers
-////        double enemyOneDistance, enemyTwoDistance = 0;
-////        if(board.badAgents.size() == 1){
-////            for(MMAgent player : board.goodAgents){
-////                sumDistance += straightLineDistance(board.badAgents.get(0).getXPos(), board.badAgents.get(0).getYPos(), player.getXPos(), player.getYPos());
-////            }
-////        }
-////        else{
-////            for(MMAgent player : board.goodAgents) {
-////                enemyOneDistance = straightLineDistance(board.badAgents.get(0).getXPos(), board.badAgents.get(0).getYPos(), player.getXPos(), player.getYPos());
-////                enemyTwoDistance = straightLineDistance(board.badAgents.get(1).getXPos(), board.badAgents.get(1).getYPos(), player.getXPos(), player.getYPos());
-////                sumDistance += Math.min(enemyTwoDistance, enemyOneDistance)/2;
-////            }
-////        }
-////        //the sum of all the player health and the sume of all the enemy health
-////        for(MMAgent player : board.goodAgents){
-////            playerHealth += player.getHP();
-////        }
-////
-////        for(MMAgent enemy : board.badAgents){
-////            enemyHealth += enemy.getHP();
-////        }
-////
-////        //the individual weights for each feature in the utility
-////        double playerHealthWeight = 2.0;
-////        double enemyHealthWeight = -15.0;
-////        double distanceBetweenWeight = -7.0;
-////
-////        this.utility = (distanceBetweenWeight * sumDistance) + (enemyHealthWeight * enemyHealth) + (playerHealthWeight * playerHealth);
-////        return this.utility;
-//    }
-
-
-//    public double getUtility() {
-//        if (this.utilityComputed) {
-//            return this.utility;
-//        }
-//
-//        // Calculate features included
-//        this.utility += getHasGoodAgentsUtility();
-//        this.utility += getHasBadAgentsUtility();
-//        this.utility += getHealthUtility();
-////        this.utility += getDamageToEnemyUtility();
-////        this.utility += getCanAttackUtility();
-////        this.utility += getLocationUtility();
-//
-//        this.utilityComputed = true;
-//        return this.utility;
-//    }
-//
-//    private double getHasGoodAgentsUtility() {
-//        double utility = 0;
-//        boolean t = false;
-//        for (MMAgent a : this.board.goodAgents) {
-//            if (a.getHP() > 0) {
-//                utility += 1;
-//                t = true;
-//            }
-//        }
-//        return t ? utility : Double.NEGATIVE_INFINITY;
-//    }
-//
-//    private double getHasBadAgentsUtility() {
-//        double utility = 0;
-//        boolean t = false;
-//        for (MMAgent a : this.board.badAgents) {
-//            if (a.getHP() > 0) {
-//                utility += 1;
-//                t = true;
-//            }
-//        }
-//        return t ? utility : Double.POSITIVE_INFINITY;
-//    }
-//
-//    private double getHealthUtility() {
-//        double utility = 0.0;
-//        for (MMAgent agent : this.board.goodAgents) {
-//            if (agent.getHP() <= 0)
-//                continue;
-//
-//            utility += (double) agent.getHP() / (double) agent.getPossibleHp();
-//        }
-//        return utility;
-//    }
 
     public double getUtility() {
         if(this.utilityComputed){
             return this.utility;
         }
         this.utility += locationUtility();
+
+        for (MMAgent a : board.goodAgents) {
+            if (a.backwards)
+                this.utility -= 50000;
+        }
+
         this.utilityComputed = true;
         return this.utility;
     }
@@ -695,8 +622,6 @@ public class GameState {
     private ArrayList<Action> getAgentActions(MMAgent agent) {
         ArrayList<Action> actions = new ArrayList<Action>();
         for (Direction direction : Direction.values()) {
-            if (direction != Direction.EAST && direction != Direction.NORTH && direction != Direction.SOUTH && direction != Direction.WEST)
-                continue;
 
             int nextX = agent.getX() + direction.xComponent();
             int nextY = agent.getY() + direction.yComponent();
