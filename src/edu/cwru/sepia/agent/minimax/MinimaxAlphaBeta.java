@@ -73,6 +73,11 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
+        List<GameStateChild> children = node.state.getChildren();
+        for(int i = 0; i < children.size(); i++) {
+            System.out.println("Child at " + i + ": " + children.get(i).state.getUtility());
+        }
+        System.out.println("size: " + children.size());
         return getBestState(node, maxVal(node, depth, alpha, beta));
     }
 
@@ -109,12 +114,15 @@ public class MinimaxAlphaBeta extends Agent {
     }
 
     private GameStateChild getBestState(GameStateChild node, double value) {
-        List<GameStateChild> children = orderChildrenWithHeuristics(node.state.getChildren());
+        List<GameStateChild> children = node.state.getChildren();
         for(int i = 0; i < children.size(); i++) {
             if(value == children.get(i).state.getUtility()) {
                 return children.get(i);
             }
         }
+        //if none of the children's utility match the specified value, use heuristics to return a hopefully decent match
+        //(This should not happen)
+        return orderChildrenWithHeuristics(node.state.getChildren()).get(0);
     }
 
     /*public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
@@ -197,25 +205,7 @@ public class MinimaxAlphaBeta extends Agent {
         return orderedChildren;
     }
 
-    public int heuristic(GameStateChild child){
-        List<Integer> playerUnits = child.state.getUnitIds(0);
-        List<Integer> enemyUnits = child.state.getUnitIds(1);
-        int sumDistance = 0;
-        int enemyOneDistance = 0;
-        int enemyTwoDistance = 0;
-        if(enemyUnits.size() == 1){
-            for(Integer playerID : playerUnits){
-                sumDistance += Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(0)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(0)).getYPos());
-            }
-        }
-        else{
-            for(Integer playerID : playerUnits) {
-                enemyOneDistance = Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(0)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(0)).getYPos());
-                enemyTwoDistance = Math.abs(child.state.getAgent(playerID).getXPos() - child.state.getAgent(enemyUnits.get(1)).getXPos()) + Math.abs(child.state.getAgent(playerID).getYPos() - child.state.getAgent(enemyUnits.get(1)).getYPos());
-                sumDistance += Math.min(enemyTwoDistance, enemyOneDistance);
-            }
-        }
-        return sumDistance;
+    public int heuristic(GameStateChild child) {
+        return 1;
     }
-
 }

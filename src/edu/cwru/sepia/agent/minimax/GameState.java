@@ -86,6 +86,10 @@ public class GameState {
             return board[x][y];
         }
 
+        public boolean isOnBoard(int x, int y){
+            return x >= 0 && x < width && y >= 0 && y < height;
+        }
+
 
         public MMAgent getAgent(int id) {
             MMAgent agent = agents.get(id);
@@ -341,25 +345,7 @@ public class GameState {
     the footman and their closest enemy is because the closer the footman is to the enemies, the closer the footman is within range
     of attacking and killing the enemy.
      */
-//    public double getUtility() {
-//        if (utilityComputed)
-//            return this.utility;
-//
-//        this.utilityComputed = true;
-//
-//        this.utility = ThreadLocalRandom.current().nextDouble();
-////        for (MMAgent goodAgent : board.goodAgents) {
-////            for (MMAgent badAgent : board.badAgents) {
-////                double d = Math.sqrt(Math.pow(goodAgent.getXPos() - badAgent.getXPos(), 2) + Math.pow(goodAgent.getYPos() - badAgent.getYPos(), 2));
-////                if (d < goodAgent.getAttackRange()) {
-////                    utility += 1;
-////                }
-////
-////                utility += board.xExtent - Math.abs(goodAgent.getXPos() - badAgent.getXPos()) + board.yExtent - Math.abs(goodAgent.getYPos() - badAgent.getYPos());
-////            }
-////        }
-//
-//        return this.utility;
+
 //
 //
 ////        if (utilityComputed)
@@ -400,6 +386,8 @@ public class GameState {
 ////        this.utility = (distanceBetweenWeight * sumDistance) + (enemyHealthWeight * enemyHealth) + (playerHealthWeight * playerHealth);
 ////        return this.utility;
 //    }
+
+
 //    public double getUtility() {
 //        if (this.utilityComputed) {
 //            return this.utility;
@@ -456,11 +444,105 @@ public class GameState {
         if(this.utilityComputed){
             return this.utility;
         }
-
-        
-
+        this.utility += locationUtility();
         this.utilityComputed = true;
         return this.utility;
+    }
+
+    private double locationUtility() {
+        if(this.board.resources.isEmpty() || noResources()) {
+            return enemyDistanceUtility();
+        }
+        double percentBlocked = percentBlocked();
+        if(percentBlocked > 0) {
+            return -30000 * percentBlocked;
+        }
+        return enemyDistanceUtility();
+    }
+
+    private boolean noResources() {
+        int count = 0;
+        int goodCount = 0;
+        for(MMAgent goodGuy : this.board.getAliveGoodAgents()){
+            for(MMAgent badGuy : this.board.getAliveBadAgents()){
+                if(resourcesBetween(goodGuy, badGuy) != 0){
+                    count++;
+                }
+            }
+            goodCount++;
+        }
+        return count < goodCount;
+    }
+
+    private double resourcesBetween(MMAgent goodGuy, MMAgent badGuy){
+        double resources = 0.0;
+        for(int i = Math.min(goodGuy.getX(), badGuy.getX()); i < Math.max(goodGuy.getX(), badGuy.getX()); i++){
+            for(int j = Math.min(goodGuy.getY(), badGuy.getY()); j < Math.max(goodGuy.getY(), badGuy.getY()); j++){
+                if(this.board.isResource(i, j)){
+                    resources += 1;
+                }
+            }
+        }
+        return resources;
+    }
+
+    private double percentBlocked() {
+        int blocked = 0;
+        int totalGood = 0;
+        for(MMAgent goodGuy : this.board.getAliveGoodAgents()){
+            MMAgent badGuy = this.getClosestEnemy(goodGuy);
+            if(badGuy != null){
+                int i = goodGuy.getX();
+                int j = goodGuy.getY();
+                while(i != badGuy.getX() || j != badGuy.getY()){
+                    if(this.board.isOnBoard(i, j) && this.board.isResource(i, j) ){
+                        blocked++;
+                    }
+                    if(i < badGuy.getX()){
+                        i++;
+                    } else if (i > badGuy.getX()) {
+                        i--;
+                    }
+                    if(j < badGuy.getY()){
+                        j++;
+                    } else if(j > badGuy.getY()){
+                        j--;
+                    }
+                }
+            }
+            totalGood++;
+        }
+        if(totalGood == 0){
+            return 0;
+        }
+        return blocked/totalGood;
+    }
+
+    private MMAgent getClosestEnemy(MMAgent goodAgent) {
+        MMAgent closestEnemy = null;
+        for(MMAgent badAgent : this.board.getAliveBadAgents()){
+            if(closestEnemy == null){
+                closestEnemy = badAgent;
+            } else if(this.board.distance(goodAgent, badAgent) < this.board.distance(goodAgent, closestEnemy)){
+                closestEnemy = badAgent;
+            }
+        }
+        return closestEnemy;
+    }
+
+
+    private double enemyDistanceUtility() {
+        double utility = 0.0;
+        for(MMAgent goodAgent : this.board.getAliveGoodAgents()){
+            double value = Double.POSITIVE_INFINITY;
+            for(MMAgent badAgent : this.board.getAliveBadAgents()){
+                value = Math.min(this.board.distance(goodAgent, badAgent), value);
+            }
+            if(value != Double.POSITIVE_INFINITY){
+                utility += value;
+            }
+        }
+        return utility * -1;
     }
 
 
@@ -622,9 +704,9 @@ public class GameState {
                 actions.add(Action.createPrimitiveMove(agent.getID(), direction));
             }
         }
-//        for(Integer id : this.board.findAttackableAgents(agent)){
-//            actions.add(Action.createPrimitiveAttack(agent.getId(), id));
-//        }
+        for(Integer id : this.board.findAttackableAgents(agent)){
+            actions.add(Action.createPrimitiveAttack(agent.getID(), id));
+        }
         return actions;
     }
 
