@@ -16,11 +16,6 @@ import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
 
 public class GameState {
-    public static final double MAX_UTILITY = Double.POSITIVE_INFINITY;
-    public static final double MIN_UTILITY = Double.NEGATIVE_INFINITY;
-    public static final String ACTION_MOVE_NAME = Action.createPrimitiveMove(0, null).getType().name();
-    public static final String ACTION_ATTACK_NAME = Action.createPrimitiveAttack(0, 0).getType().name();
-
     private final Board board;
     private final boolean isPlayerTurn;
     private boolean utilityCalculated = false;
@@ -143,40 +138,6 @@ public class GameState {
         }
     }
 
-//    /**
-//     * Represents a single location or square on the playing board
-//     */
-//    private abstract class Square {
-//        private final int id;
-//        private int x, y;
-//
-//        public Square(int id, int x, int y) {
-//            this.id = id;
-//            this.x = x;
-//            this.y = y;
-//        }
-//
-//        public int getID() {
-//            return this.id;
-//        }
-//
-//        public int getX() {
-//            return this.x;
-//        }
-//
-//        public void setX(int x) {
-//            this.x = x;
-//        }
-//
-//        public int getY() {
-//            return this.y;
-//        }
-//
-//        public void setY(int y) {
-//            this.y = y;
-//        }
-//    }
-
     /**
      * A representation of an agent either good (footman) or bad (archer)
      */
@@ -249,7 +210,7 @@ public class GameState {
      */
     private class Resource {
         private final int id, x, y;
-        
+
         public Resource(int id, int x, int y) {
             this.id = id;
             this.x = x;
@@ -342,14 +303,14 @@ public class GameState {
      * @return the number of good agents or the MIN_UTILITY if all good agents are dead (the game is over and we lost)
      */
     private double getHasGoodAgentsUtility() {
-        return this.board.getAliveGoodAgents().isEmpty() ? MIN_UTILITY : this.board.getAliveGoodAgents().size();
+        return this.board.getAliveGoodAgents().isEmpty() ? Double.POSITIVE_INFINITY : this.board.getAliveGoodAgents().size();
     }
 
     /**
      * @return the number of bad agents or the MAX_UTILITY if all bad agents are dead (the game is over and we won)
      */
     private double getHasBadAgentsUtility() {
-        return this.board.getAliveBadAgents().isEmpty() ? MAX_UTILITY : this.board.getAliveBadAgents().size();
+        return this.board.getAliveBadAgents().isEmpty() ? Double.NEGATIVE_INFINITY : this.board.getAliveBadAgents().size();
     }
 
     /**

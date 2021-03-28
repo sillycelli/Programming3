@@ -1,6 +1,7 @@
 package edu.cwru.sepia.agent.minimax;
 
 import edu.cwru.sepia.action.Action;
+import edu.cwru.sepia.action.ActionType;
 import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
@@ -185,7 +186,7 @@ public class MinimaxAlphaBeta extends Agent {
         for(GameStateChild child : children){
             int numAttacks = 0;
             for(Action action : child.action.values()){
-                if(action.getType().name().equals(GameState.ACTION_ATTACK_NAME)){
+                if(action.getType() == ActionType.PRIMITIVEATTACK){
                     numAttacks++;
                 }
             }
@@ -201,18 +202,19 @@ public class MinimaxAlphaBeta extends Agent {
                 moves.add(child);
             }
         }
-        moves.sort(COMPARATOR);
+        moves.sort(new Comparator<GameStateChild>() {
+            @Override
+            public int compare(GameStateChild gameStateChild, GameStateChild t1) {
+                if(gameStateChild.state.getUtility() > t1.state.getUtility()){
+                    return -1;
+                } else if (gameStateChild.state.getUtility() < t1.state.getUtility()){
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
         ordered.addAll(moves);
         return ordered;
     }
-
-    private static final Comparator<GameStateChild> COMPARATOR = (o1, o2) -> {
-        if(o1.state.getUtility() > o2.state.getUtility()){
-            return -1;
-        } else if (o1.state.getUtility() < o2.state.getUtility()){
-            return 1;
-        } else {
-            return 0;
-        }
-    };
 }
