@@ -255,6 +255,7 @@ public class GameState {
 
         for (MMAgent agent : this.board.getAliveGoodAgents()) {
             utility += (double) agent.getHP() / (double) agent.getMaxHP();
+            utility += this.board.findAttackableAgents(agent).size();
         }
 
 
@@ -263,12 +264,7 @@ public class GameState {
         }
 
 
-        for (MMAgent agent : this.board.getAliveGoodAgents()) {
-            utility += this.board.findAttackableAgents(agent).size();
-        }
-
-
-        this.utility += getLocationUtility();
+        this.utility += getPositionUtility();
 
         if (this.board.getAliveGoodAgents().isEmpty()) {
             this.utility = Double.POSITIVE_INFINITY;
@@ -283,64 +279,52 @@ public class GameState {
     }
 
 
-    private double getLocationUtility() {
-        if (this.board.resources.isEmpty() ||
-                noResourcesAreInTheArea()) {
-            return distanceFromEnemy() * -1;
+    private double getPositionUtility() {
+        if (this.board.resources.isEmpty()) {
+            int resourcesInAgentArea = 0;
+            int numGoodAgents = 0;
+            for (MMAgent badGuy : this.board.getAliveBadAgents()) {
+                for (MMAgent goodGuy : this.board.getAliveGoodAgents()) {
+                    if (numResourceInAreaBetween(badGuy, goodGuy) != 0) {
+                        resourcesInAgentArea++;
+                    }
+                }
+                numGoodAgents++;
+            }
+            if(resourcesInAgentArea < numGoodAgents) {
+                return distanceFromEnemy() * -1;
+            }
         }
-        double percentageBlocked = percentageOfBlockedFootmen();
-        if (percentageBlocked > 0) {
-            return -200000 * percentageBlocked;
-        }
-        return distanceFromEnemy() * -1;
+        double proportionBlocked = proportionObstacles();
+        return (proportionBlocked > 0)? (-200000 * proportionBlocked) : (distanceFromEnemy() * -1);
     }
 
 
-    private double percentageOfBlockedFootmen() {
-        int numBlocked = 0;
-        int totalNumGood = 0;
+    private double proportionObstacles() {
+        int numGoodGuys = 0;
+        int blockedGoodGuys = 0;
         for (MMAgent goodGuy : this.board.getAliveGoodAgents()) {
             MMAgent badGuy = this.getClosestEnemy(goodGuy);
             if (badGuy != null) {
-                int i = goodGuy.getX();
-                int j = goodGuy.getY();
-                while (i != badGuy.getX() || j != badGuy.getY()) {
-                    if (this.board.canMove(i, j)) {
-                        numBlocked++;
+                int currentX = goodGuy.getX();
+                int currentY = goodGuy.getY();
+                while (currentX != badGuy.getX() || currentY != badGuy.getY()) {
+                    if (this.board.canMove(currentX, currentY)) {
+                        blockedGoodGuys++;
                     }
-                    if (i < badGuy.getX()) {
-                        i++;
-                    } else if (i > badGuy.getX()) {
-                        i--;
+                    if(currentX != badGuy.getX()){
+                        currentX += (currentX > badGuy.getX())? -1 : 1;
                     }
-                    if (j < badGuy.getY()) {
-                        j++;
-                    } else if (j > badGuy.getY()) {
-                        j--;
+                    if(currentY != badGuy.getY()){
+                        currentY += (currentY > badGuy.getY())? -1 : 1;
                     }
                 }
             }
-            totalNumGood++;
+            numGoodGuys++;
         }
-        if (totalNumGood == 0) {
-            return 0;
-        }
-        return (double) numBlocked / (double) totalNumGood;
+        return (numGoodGuys == 0)? 0.0 : (blockedGoodGuys / numGoodGuys);
     }
 
-    private boolean noResourcesAreInTheArea() {
-        int count = 0;
-        int numGood = 0;
-        for (MMAgent goodGuy : this.board.getAliveGoodAgents()) {
-            for (MMAgent badGuy : this.board.getAliveBadAgents()) {
-                if (numResourceInAreaBetween(goodGuy, badGuy) != 0) {
-                    count++;
-                }
-            }
-            numGood++;
-        }
-        return count < numGood;
-    }
 
     private double numResourceInAreaBetween(MMAgent goodGuy, MMAgent badGuy) {
         double resources = 0.0;
@@ -394,7 +378,17 @@ public class GameState {
 
         List<Map<Integer, Action>> l = cartesianProductOf2(actionsForEachAgent);
 
-        return convertToGameStateChildList(l);
+        List<GameStateChild> gscTwo = new ArrayList<GameStateChild>();
+        GameState gs = new GameState(this);
+        for (Map<Integer, Action> actionHashMap : l) {
+            for (Action action : actionHashMap.values()) {
+                gs.applyAction(action);
+            }
+            GameStateChild resultingChild = new GameStateChild(actionHashMap, gs);
+            gscTwo.add(resultingChild);
+            gs = new GameState(this);
+        }
+        return gscTwo;
     }
 
     private ArrayList<Action> getAgentActions(MMAgent agent) {
@@ -442,7 +436,7 @@ public class GameState {
 
         return maps;
     }
-
+    /*
     private List<GameStateChild> convertToGameStateChildList(List<Map<Integer, Action>> maps) {
         List<GameStateChild> gsc = new ArrayList<GameStateChild>();
         for (Map<Integer, Action> actionMap : maps) {
@@ -454,7 +448,7 @@ public class GameState {
         }
         return gsc;
     }
-
+    */
     private void applyAction(Action action) {
         if (action.getType() == ActionType.PRIMITIVEMOVE) {
             Direction dir = ((DirectedAction) action).getDirection();
