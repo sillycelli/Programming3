@@ -435,19 +435,7 @@ public class GameState {
 
         return maps;
     }
-    /*
-    private List<GameStateChild> convertToGameStateChildList(List<Map<Integer, Action>> maps) {
-        List<GameStateChild> gsc = new ArrayList<GameStateChild>();
-        for (Map<Integer, Action> actionMap : maps) {
-            GameState gs = new GameState(this);
-            for (Action action : actionMap.values()) {
-                gs.applyAction(action);
-            }
-            gsc.add(new GameStateChild(actionMap, gs));
-        }
-        return gsc;
-    }
-    */
+
     private void applyAction(Action action) {
         if (action.getType() == ActionType.PRIMITIVEMOVE) {
             Direction dir = ((DirectedAction) action).getDirection();
