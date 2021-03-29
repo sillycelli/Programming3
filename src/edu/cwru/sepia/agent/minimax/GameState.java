@@ -326,10 +326,10 @@ public class GameState {
     }
 
 
-    private double numResourceInAreaBetween(MMAgent goodGuy, MMAgent badGuy) {
+    private double numResourceInAreaBetween(MMAgent goodAgent, MMAgent badAgent) {
         double resources = 0.0;
-        for (int i = Math.min(goodGuy.getX(), badGuy.getX()); i < Math.max(goodGuy.getX(), badGuy.getX()); i++) {
-            for (int j = Math.min(goodGuy.getY(), badGuy.getY()); j < Math.max(goodGuy.getY(), badGuy.getY()); j++) {
+        for (int i = Math.min(goodAgent.getX(), badAgent.getX()); i < Math.max(goodAgent.getX(), badAgent.getX()); i++) {
+            for (int j = Math.min(goodAgent.getY(), badAgent.getY()); j < Math.max(goodAgent.getY(), badAgent.getY()); j++) {
                 if (this.board.isResource(i, j)) {
                     resources += 1;
                 }
@@ -341,12 +341,12 @@ public class GameState {
     private double distanceFromEnemy() {
         double utility = 0.0;
         for (MMAgent goodAgent : this.board.getAliveGoodAgents()) {
-            double value = Double.POSITIVE_INFINITY;
+            double val = Double.POSITIVE_INFINITY;
             for (MMAgent badAgent : this.board.getAliveBadAgents()) {
-                value = Math.min(this.board.distance(goodAgent, badAgent), value);
+                val = Math.min(this.board.distance(goodAgent, badAgent), val);
             }
-            if (value != Double.POSITIVE_INFINITY) {
-                utility += value;
+            if (val != Double.POSITIVE_INFINITY) {
+                utility += val;
             }
         }
         return utility;
@@ -357,7 +357,7 @@ public class GameState {
         for (MMAgent badAgent : this.board.getAliveBadAgents()) {
             if (closestEnemy == null) {
                 closestEnemy = badAgent;
-            } else if (this.board.distance(goodAgent, badAgent) < this.board.distance(goodAgent, closestEnemy)) {
+            } else if (this.board.distance(goodAgent, closestEnemy) > this.board.distance(goodAgent, badAgent)) {
                 closestEnemy = badAgent;
             }
         }
@@ -366,7 +366,6 @@ public class GameState {
 
 
     public List<GameStateChild> getChildren() {
-        ArrayList<GameStateChild> gsc = new ArrayList<>();
 
         ArrayList<MMAgent> agents = isPlayerTurn ? board.getAliveGoodAgents() : board.getAliveBadAgents();
 
